@@ -25,7 +25,12 @@ return {
     local pylintarg = ""
     if does_exist(pylintrc) then
       print("Using .pylintrc")
-      pylintarg = ("--pylintarg=" .. pylintrc)
+      pylintarg = ("--rcfile=" .. pylintrc)
+    end
+    local pyproject= (vim.fn.getcwd() .. sep .. "pyproject.toml")
+    if does_exist(pyproject) then
+      print("Using pyproject.toml")
+      pylintarg = ("--rcfile=" .. pyproject)
     end
 
     local lspconfig = require("lspconfig")
@@ -60,7 +65,7 @@ return {
     end
 
     vim.keymap.set("n", "<leader>d", vim.lsp.buf.definition, {})
-    vim.keymap.set("n", "<leader>b", vim.lsp.buf.format, {})
+    vim.keymap.set("n", "<leader>f", vim.lsp.buf.format, {})
     vim.keymap.set("n", "<leader><right>", vim.diagnostic.goto_next)
     vim.keymap.set("n", "<leader><left>", vim.diagnostic.goto_prev)
     vim.keymap.set("n", "<leader>?", show_diagnostics)

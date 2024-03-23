@@ -9,6 +9,10 @@ vim.o.expandtab = true
 vim.opt.listchars = { tab = ">-", space = "·" }
 vim.opt.list = true
 
+-- Disable netrw at the very start of your init.lua, for nvim-tree
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
+
 -- Load Lazy, the plugin manager
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
@@ -30,13 +34,13 @@ vim.keymap.set("n", "<Leader>w", ":w<CR>")
 vim.keymap.set("n", "<Leader>q", ":q<CR>")
 vim.keymap.set("n", "<Space>", "za")
 -- Keymaps for plugins
-vim.keymap.set("n", "<F2>", ":Neotree toggle<CR>")
+vim.keymap.set("n", "<F2>", ":NvimTreeToggle<CR>")
 vim.keymap.set("n", "<Leader>b", ":ALEFix<CR>")
 vim.keymap.set("n", "<C-W>X", ":WinShift swap<CR>")
 
 -- Settings by language
 vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
-  pattern = { "*.lua", "*.cpp", "*.h" },
+  pattern = { "*.lua", "*.cpp", "*.h", "*.html", "*.jinja2", "*.js", "*.css" },
   callback = function()
     vim.o.tabstop = 2
     vim.o.softtabstop = 2
