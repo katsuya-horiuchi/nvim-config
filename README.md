@@ -1,5 +1,14 @@
 # Neovim config
 
+## Install nerd font on mac
+This config uses `nvim-tree` which uses nerd icons.
+
+```bash
+$ brew install font-hack-nerd-font
+```
+Change the font on iTerm2 by `Preferences` -> `Profiles` -> `Text` and change
+`Non-ASCII Font` to it.
+
 ## LSP setup by language
 
 ### Python
