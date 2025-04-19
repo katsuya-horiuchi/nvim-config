@@ -1,13 +1,25 @@
 -- Plugin to change color scheme
 
 return {
-  "tanvirtin/monokai.nvim",
-  priority = 1000, -- Make sure to load this before all the other start plugins
-  config = function()
-    vim.cmd([[colorscheme monokai]])
-
-    -- Make background transparent
-    -- Reference: https://github.com/tanvirtin/monokai.nvim/issues/13
-    vim.cmd([[:hi Normal ctermbg=none guibg=none]])
-  end,
+  "loctvl842/monokai-pro.nvim",
+  priority=1000,  -- Make sure to load this before all the other plugins
+  config=function()
+    require("monokai-pro").setup({
+      transparent_background = false,
+      terminal_colors = true,
+      devicons = true,
+      styles = {
+        comment = { italic = false },
+        keyword = { italic = false },
+        type = { italic = false },
+        storageclass = { italic = false },
+        structure = { italic = false },
+        parameter = { italic = false },
+        annotation = { italic = false },
+        tag_attribute = { italic = false },
+      },
+      filter = "spectrum",
+    })
+    vim.cmd([[colorscheme monokai-pro]])
+  end
 }

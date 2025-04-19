@@ -82,3 +82,8 @@ vim.api.nvim_create_user_command(
   vim.diagnostic.setloclist,
   { desc="Show diagnistic window" }
 )
+vim.api.nvim_create_user_command(
+  "Bash",
+  ":tab term",
+  { desc = "Start terminal in a new tab" }
+)
