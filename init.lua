@@ -46,6 +46,7 @@ vim.keymap.set("n", "<Leader>8", "8gt")
 vim.keymap.set("n", "<Leader>9", "9gt")
 vim.keymap.set("n", "<Leader>0", ":tablast")
 vim.keymap.set("t", "<Esc>", "<C-\\><C-n>")
+vim.keymap.set("t", "jj", "<C-\\><C-n>")
 
 -- Keymaps for plugins
 vim.keymap.set("n", "<F2>", ":NvimTreeToggle<CR>")

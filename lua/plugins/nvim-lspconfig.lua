@@ -10,7 +10,9 @@ return {
     "williamboman/mason-lspconfig.nvim",
   },
   config = function()
-    require("lspconfig").pylsp.setup({
+    local lspconfig = require("lspconfig")
+
+    lspconfig.pylsp.setup({
       settings = {
         pylsp = {
           plugins = {
@@ -36,5 +38,7 @@ return {
         },
       },
     })
+
+    lspconfig.lua_ls.setup({})
   end,
 }
