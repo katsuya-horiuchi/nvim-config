@@ -2,8 +2,8 @@
 
 return {
   "loctvl842/monokai-pro.nvim",
-  priority=1000,  -- Make sure to load this before all the other plugins
-  config=function()
+  priority = 1000, -- Make sure to load this before all the other plugins
+  config = function()
     require("monokai-pro").setup({
       transparent_background = false,
       terminal_colors = true,
@@ -21,5 +21,5 @@ return {
       filter = "spectrum",
     })
     vim.cmd([[colorscheme monokai-pro]])
-  end
+  end,
 }

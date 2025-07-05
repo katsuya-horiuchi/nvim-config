@@ -81,7 +81,7 @@ vim.keymap.set("n", "<leader><left>", vim.diagnostic.goto_prev)
 vim.api.nvim_create_user_command(
   "Bug",
   vim.diagnostic.setloclist,
-  { desc="Show diagnistic window" }
+  { desc = "Show diagnistic window" }
 )
 vim.api.nvim_create_user_command(
   "Bash",

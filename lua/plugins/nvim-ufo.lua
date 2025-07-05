@@ -14,7 +14,10 @@ return {
           segments = {
             { text = { builtin.foldfunc }, click = "v:lua.ScFa" },
             { text = { "%s" }, click = "v:lua.ScSa" },
-            { text = { builtin.lnumfunc, " " }, click = "v:lua.ScLa" },
+            {
+              text = { builtin.lnumfunc, " " },
+              click = "v:lua.ScLa",
+            },
           },
         })
       end,
@@ -40,7 +43,7 @@ return {
     vim.o.fillchars = [[eob: ,fold: ,foldopen:,foldsep: ,foldclose:]]
     require("ufo").setup({
       close_fold_kinds_for_ft = {
-        default = { "imports" }
+        default = { "imports" },
       },
     })
   end,
