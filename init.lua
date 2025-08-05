@@ -84,6 +84,11 @@ vim.api.nvim_create_user_command(
   { desc = "Show diagnistic window" }
 )
 vim.api.nvim_create_user_command(
+  "Rename",
+  vim.lsp.buf.rename,
+  { desc = "Rename variable" }
+)
+vim.api.nvim_create_user_command(
   "Bash",
   ":tab term",
   { desc = "Start terminal in a new tab" }
