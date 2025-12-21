@@ -1,6 +1,13 @@
 # Neovim config
 
-## Install nerd font on mac
+My neovim configuration
+
+## Requirements
+
+### Environment variables
+* `NEORG_PATH`: Path to the default workspace for Neorg
+
+### Install nerd font on mac
 This config uses `nvim-tree` which uses nerd icons.
 
 ```bash
