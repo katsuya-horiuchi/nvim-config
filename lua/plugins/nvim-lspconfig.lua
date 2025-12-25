@@ -25,9 +25,16 @@ return {
     "nanotee/sqls.nvim",
   },
   config = function()
-    local lspconfig = require("lspconfig")
+    local version = vim.version()
 
-    lspconfig.pylsp.setup({
+    -- Flag to check whether the new syntax should be used for LSP configuration
+    local is_new = version.major == 0 and version.minor >= 11
+
+    if not is_new then
+      lspconfig = require("lspconfig")
+    end
+
+    pylsp_config = {
       settings = {
         pylsp = {
           plugins = {
@@ -52,42 +59,57 @@ return {
           },
         },
       },
-    })
+    }
 
-    lspconfig.lua_ls.setup({
+    --- Python
+    if is_new then
+      vim.lsp.config("pylsp", pylsp_config)
+      vim.lsp.enable("pylsp")
+    else
+      lspconfig.pylsp.setup(pylsp_config)
+    end
+
+    --- Lua
+    lua_ls_config = {
       -- This disable "Undefined global vim" error message
       -- https://github.com/neovim/neovim/discussions/24119#discussioncomment-9137639
       on_init = function(client)
         local path = client.workspace_folders[1].name
         if
-          vim.loop.fs_stat(path .. "/.luarc.json")
-          or vim.loop.fs_stat(path .. "/.luarc.jsonc")
+            vim.loop.fs_stat(path .. "/.luarc.json")
+            or vim.loop.fs_stat(path .. "/.luarc.jsonc")
         then
           return
         end
 
         client.config.settings.Lua =
-          vim.tbl_deep_extend("force", client.config.settings.Lua, {
-            runtime = {
-              version = "LuaJIT",
-            },
-            -- Make the server aware of Neovim runtime files
-            workspace = {
-              checkThirdParty = false,
-              library = {
-                vim.env.VIMRUNTIME,
+            vim.tbl_deep_extend("force", client.config.settings.Lua, {
+              runtime = {
+                version = "LuaJIT",
               },
-            },
-          })
+              -- Make the server aware of Neovim runtime files
+              workspace = {
+                checkThirdParty = false,
+                library = {
+                  vim.env.VIMRUNTIME,
+                },
+              },
+            })
       end,
       settings = {
         Lua = {},
       },
-    })
+    }
+    if is_new then
+      vim.lsp.config("lua_ls", lua_ls_config)
+      vim.lsp.enable("lua_ls")
+    else
+      lspconfig.lua_ls.setup(lua_ls_config)
+    end
 
-    -- SQL
+    --- SQL
     -- https://github.com/sqls-server/sqls
-    lspconfig.sqls.setup({
+    local sqls_config = {
       on_attach = function(client, bufnr)
         if load_require("sqls") == 0 then
           require("sqls").on_attach(client, bufnr)
@@ -95,7 +117,14 @@ return {
           print("Not using sql-language-server")
         end
       end,
-    })
+    }
+
+    if is_new then
+      vim.lsp.config("sqls", sqls_config)
+      vim.lsp.enable("sqls")
+    else
+      lspconfig.sqls.setup(sqls_config)
+    end
 
     --Enable (broadcasting) snippet capability for completion
     local capabilities = vim.lsp.protocol.make_client_capabilities()
