@@ -10,8 +10,16 @@ return {
     words["@low"] = "#4188f2"
 
     local word_color_group = function(_, match)
-      local hex = words[match]
-      if hex == nil then return nil end
+      local hex
+
+      -- In Neorg notes, deadline are expressed as "@ + date" (e.g. @2025-12-31)
+      if string.find(match, "@%d-%d-%d") then
+        hex = "#e5ed10"
+      else
+        hex = words[match]
+        if hex == nil then return nil end
+      end
+
       return hipatterns.compute_hex_color_group(hex, "bg")
     end
 
