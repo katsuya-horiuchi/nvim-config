@@ -12,15 +12,26 @@ return {
     local word_color_group = function(_, match)
       local hex
 
-      -- In Neorg notes, deadline are expressed as "@ + date" (e.g. @2025-12-31)
-      if string.find(match, "@%d-%d-%d") then
-        hex = "#e5ed10"
-      else
-        hex = words[match]
-        if hex == nil then return nil end
+      -- Hard-coded values above
+      hex = words[match]
+
+      -- Pattern matching
+      local patterns = {
+        "@%d+-%d+-%d+$",   -- deadline (e.g. @2025-12-31)
+        "@%d+[\\.%d+]*h$", -- Estimated time (e.g. @1h, @1.5h)
+      }
+      if hex == nil then
+        for i = 1, #patterns, 1
+        do
+          if string.find(match, patterns[i]) then
+            hex = "#e5ed10"
+          end
+        end
       end
 
-      return hipatterns.compute_hex_color_group(hex, "bg")
+      if hex ~= nil then
+        return hipatterns.compute_hex_color_group(hex, "bg")
+      end
     end
 
     hipatterns.setup({
