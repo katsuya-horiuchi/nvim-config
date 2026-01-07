@@ -72,48 +72,35 @@ return {
     config = function()
       local hipatterns = require("mini.hipatterns")
 
-      -- Mapping for custom words
-      local words = {}
-      -- For Neorg, priority for todo tasks
-      words["@high"] = "#f24141"
-      words["@low"] = "#4188f2"
-
-      local word_color_group = function(_, match)
-        local hex
-
-        -- Hard-coded values above
-        hex = words[match]
-
-        -- Pattern matching
-        local patterns = {
-          "@%d+-%d+-%d+$",   -- deadline (e.g. @2025-12-31)
-          "@%d+[\\.%d+]*h$", -- Estimated time (e.g. @1h, @1.5h)
+      local function custom_word(pat, hex)
+        return {
+          pattern = pat,
+          group = hipatterns.compute_hex_color_group(hex, "bg")
         }
-        if hex == nil then
-          for i = 1, #patterns, 1
-          do
-            if string.find(match, patterns[i]) then
-              hex = "#e5ed10"
-            end
-          end
-        end
-
-        if hex ~= nil then
-          return hipatterns.compute_hex_color_group(hex, "bg")
-        end
       end
 
       hipatterns.setup({
         highlighters = {
           -- Default
-          fixme      = { pattern = "%f[%w]()FIXME()%f[%W]", group = "MiniHipatternsFixme" },
-          hack       = { pattern = "%f[%w]()HACK()%f[%W]", group = "MiniHipatternsHack" },
-          todo       = { pattern = "%f[%w]()TODO()%f[%W]", group = "MiniHipatternsTodo" },
-          note       = { pattern = "%f[%w]()NOTE()%f[%W]", group = "MiniHipatternsNote" },
-          -- Custom
-          word_color = { pattern = "%S+", group = word_color_group },
+          fixme               = { pattern = "%f[%w]()FIXME()%f[%W]", group = "MiniHipatternsFixme" },
+          hack                = { pattern = "%f[%w]()HACK()%f[%W]", group = "MiniHipatternsHack" },
+          todo                = { pattern = "%f[%w]()TODO()%f[%W]", group = "MiniHipatternsTodo" },
+          note                = { pattern = "%f[%w]()NOTE()%f[%W]", group = "MiniHipatternsNote" },
+
+          -- Neorg
+          neorg_priority_high = custom_word("@high", "#f24141"),
+          neorg_priority_low  = custom_word("@low", "#4188f2"),
+          neorg_deadline      = custom_word("@%d+-%d+-%d+$", "#e5ed10"),
+          neorg_time          = custom_word("@%d+[\\.%d+]*h$", "#e5ed10"),
+          neorg_label         = custom_word("%(@label:%s.+%)", "#2ca534"),
         },
       })
+    end
+  },
+  {
+    "norcalli/nvim-colorizer.lua",
+    config = function()
+      require("colorizer").setup()
     end
   },
   {
