@@ -54,7 +54,7 @@ vim.keymap.set("n", "<C-W>X", ":WinShift swap<CR>")
 
 -- Settings by language
 vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
-  pattern = { "*.lua", "*.cpp", "*.h", "*.html", "*.jinja2", "*.js", "*.css" },
+  pattern = { "*.lua", "*.cpp", "*.h", "*.html", "*.jinja2", "*.js", "*.css", "*.jinja" },
   callback = function()
     vim.o.tabstop = 2
     vim.o.softtabstop = 2

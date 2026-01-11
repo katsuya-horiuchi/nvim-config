@@ -147,7 +147,15 @@ return {
       vim.lsp.enable("cssls")
 
       vim.lsp.config("html", {
+        filetypes = { "html", "htmldjango.jinja" },
         capabilities = capabilities,
+        init_options = {
+          configurationSection = { "html", "htmldjango.jinja" },
+          embeddedLanguage = {
+            javascript = true
+          },
+          provideFormatter = true,
+        }
       })
       vim.lsp.enable("html")
 
@@ -155,6 +163,18 @@ return {
         { capabilities = capabilities }
       )
       vim.lsp.enable("jinja_lsp")
+
+      local emmet_config = {
+        filetypes = { "html", "htmldjango.jinja" },
+        cmd = { "emmet-language-server", "--stdio" },
+        init_options = {
+          showAbbreviationSuggestions = true,
+          showExpandedAbbreviation = "always",
+          showSuggestionsAsSnippets = false,
+        },
+      }
+      vim.lsp.config("emmet-language-server", emmet_config)
+      vim.lsp.enable("emmet-language-server")
     end,
   },
   -- LSP for jinja
@@ -226,5 +246,12 @@ return {
     config = function()
       require("lsp_signature").setup()
     end,
-  }
+  },
+  {
+    "olrtg/nvim-emmet",
+    config = function()
+      vim.keymap.set({ "n", "v" }, "<leader>xe",
+        require("nvim-emmet").wrap_with_abbreviation)
+    end,
+  },
 }
