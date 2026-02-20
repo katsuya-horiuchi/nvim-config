@@ -93,3 +93,27 @@ vim.api.nvim_create_user_command(
   ":tab term",
   { desc = "Start terminal in a new tab" }
 )
+vim.api.nvim_create_user_command(
+  "Template",
+  function(opts)
+    local lang = opts.args
+    local file
+    if lang == "python" then
+      file = "python.py"
+    else
+      print("Template not available for the language:", lang)
+      return
+    end
+    local path = table.concat({
+      os.getenv("HOME"), "/.config/nvim/templates/", file
+    })
+
+    local f = io.open(path, "r")
+    if f ~= nil
+    then
+      local content = f:read("*a")
+      vim.snippet.expand(content)
+    end
+  end,
+  { desc = "Copy from template", nargs = "?" }
+)
