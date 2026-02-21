@@ -23,6 +23,18 @@ return {
       "williamboman/mason.nvim",
       "williamboman/mason-lspconfig.nvim",
       "nanotee/sqls.nvim",
+      {
+        "jedrzejboczar/devcontainers.nvim",
+        dependencies = {
+          "miversen33/netman.nvim", -- optional to browser files in docker container
+        },
+        config = function()
+          require("devcontainers").setup({
+            docker_cmd = "podman",
+            log = { level = "trace" }
+          })
+        end
+      }
     },
     config = function()
       local version = vim.version()
@@ -44,6 +56,13 @@ return {
         }
       )
 
+      local does_devcontainer_exist = function()
+        local dir = vim.fn.getcwd() .. "/.devcontainer"
+        if vim.uv.fs_stat(dir) then
+          return true
+        end
+        return false
+      end
 
       pylsp_config = {
         settings = {
@@ -74,7 +93,15 @@ return {
 
       --- Python
       if is_new then
-        vim.lsp.config("pylsp", pylsp_config)
+        if does_devcontainer_exist() then
+          print("Using devcontainer for pylsp")
+          vim.lsp.config(
+            "pylsp",
+            { cmd = require("devcontainers").lsp_cmd({ "pylsp" }) }
+          )
+        else
+          vim.lsp.config("pylsp", pylsp_config)
+        end
         vim.lsp.enable("pylsp")
       else
         lspconfig.pylsp.setup(pylsp_config)
