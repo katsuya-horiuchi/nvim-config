@@ -88,5 +88,35 @@ return {
         extensions = {},
       })
     end,
+  },
+  -- Telescope
+  {
+    "nvim-telescope/telescope.nvim",
+    version = "*",
+    dependencies = {
+      "nvim-lua/plenary.nvim",
+      -- optional but recommended
+      { "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
+      "crispgm/telescope-heading.nvim"
+    },
+    config = function()
+      require("telescope").setup({
+        extensions = {
+          heading = {
+            picker_opts = {
+              sorting_strategy = "ascending"
+            }
+          }
+        }
+      })
+    end
+  },
+  {
+    "stevearc/aerial.nvim",
+    config = function()
+      require("aerial").setup({
+        disable_max_lines = 20000,
+      })
+    end
   }
 }
