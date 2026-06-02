@@ -35,7 +35,11 @@ return {
         filters = {
           dotfiles = false,
         },
+        view = {
+          preserve_window_proportions = true,
+        },
       })
+      require("utils").restore_on_close("NvimTree")
     end,
   },
   -- Manage windows (e.g. swap two windows)
@@ -120,7 +124,9 @@ return {
       })
 
       -- Set keymaps
-      vim.keymap.set("n", "<leader>ta", ":AerialToggle<CR>")
+      local utils = require("utils")
+      vim.keymap.set("n", "<leader>ta", function() utils.toggle_with_restore("AerialToggle") end)
+      utils.restore_on_close("aerial")
     end
   }
 }

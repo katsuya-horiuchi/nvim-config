@@ -49,7 +49,10 @@ vim.keymap.set("t", "<Esc>", "<C-\\><C-n>")
 vim.keymap.set("t", "jj", "<C-\\><C-n>")
 
 -- Keymaps for plugins
-vim.keymap.set("n", "<F2>", ":NvimTreeToggle<CR>")
+
+local utils = require("utils")
+vim.keymap.set("n", "<F2>",
+  function() utils.toggle_with_restore("NvimTreeToggle") end)
 vim.keymap.set("n", "<C-W>X", ":WinShift swap<CR>")
 
 -- Settings by language
@@ -121,12 +124,12 @@ vim.api.nvim_create_user_command(
   "Find",
   function(opts)
     local input_string = opts.args
-    if (input_string == '') then
+    if (input_string == "") then
       return
     end
     require("telescope.builtin").grep_string({
       search = input_string
     })
   end,
-  { desc = "Find words", nargs = "?"}
+  { desc = "Find words", nargs = "?" }
 )
