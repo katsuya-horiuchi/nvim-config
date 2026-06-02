@@ -23,6 +23,21 @@ return {
       "williamboman/mason.nvim",
       "williamboman/mason-lspconfig.nvim",
       "nanotee/sqls.nvim",
+      {
+        "jedrzejboczar/devcontainers.nvim",
+        dependencies = {
+          "miversen33/netman.nvim", -- optional to browser files in docker container
+        },
+        config = function()
+          require("devcontainers").setup({
+            docker_cmd = "podman",
+            -- devcontainers_cli_cmd = {
+            --   "devcontainer", "--docker-path", "podman"
+            -- },
+            log = { level = "trace" }
+          })
+        end
+      }
     },
     config = function()
       local version = vim.version()
@@ -44,40 +59,62 @@ return {
         }
       )
 
+      local does_devcontainer_exist = function()
+        local dir = vim.fn.getcwd() .. "/.devcontainer"
+        if vim.uv.fs_stat(dir) then
+          return true
+        end
+        return false
+      end
 
-      pylsp_config = {
-        settings = {
-          pylsp = {
-            plugins = {
-              black = {
-                enabled = true,
-                line_length = 80,
-              },
-              pylint = {
-                enabled = false,
-              },
-              pyright = {
-                enabled = false,
-              },
-              mccabe = {
-                enabled = false,
-              },
-              pylsp_mypy = {
-                enabled = true,
-                live_mode = false,
-                strict = true,
-              },
+      local pylsp_settings = {
+        pylsp = {
+          plugins = {
+            black = {
+              enabled = true,
+              line_length = 80,
+            },
+            pylint = {
+              enabled = false,
+            },
+            pyright = {
+              enabled = false,
+            },
+            mccabe = {
+              enabled = false,
+            },
+            pylsp_mypy = {
+              enabled = true,
+              live_mode = false,
+              strict = true,
             },
           },
         },
       }
 
+      local is_env_activated = function()
+        local pythonpath_env = os.getenv("HOME") .. "/env/bin/python"
+        local pythonpath = os.execute("which python")
+        return pythonpath == pythonpath_env
+      end
+
       --- Python
       if is_new then
-        vim.lsp.config("pylsp", pylsp_config)
+        if does_devcontainer_exist() and not is_env_activated() then
+          print("Using devcontainer for pylsp")
+          vim.lsp.config(
+            "pylsp",
+            {
+              cmd = require("devcontainers").lsp_cmd({ "pylsp" }),
+              settings = pylsp_settings
+            }
+          )
+        else
+          vim.lsp.config("pylsp", { settings = pylsp_settings })
+        end
         vim.lsp.enable("pylsp")
       else
-        lspconfig.pylsp.setup(pylsp_config)
+        lspconfig.pylsp.setup({ settings = pylsp_settings })
       end
 
       --- Lua
@@ -118,28 +155,22 @@ return {
         lspconfig.lua_ls.setup(lua_ls_config)
       end
 
-      --- SQL
-      -- https://github.com/sqls-server/sqls
-      local sqls_config = {
-        on_attach = function(client, bufnr)
-          if load_require("sqls") == 0 then
-            require("sqls").on_attach(client, bufnr)
-          else
-            print("Not using sql-language-server")
-          end
-        end,
-      }
 
-      if is_new then
-        vim.lsp.config("sqls", sqls_config)
-        vim.lsp.enable("sqls")
-      else
-        lspconfig.sqls.setup(sqls_config)
-      end
-
-      --Enable (broadcasting) snippet capability for completion
+      -- Enable (broadcasting) snippet capability for completion
       local capabilities = vim.lsp.protocol.make_client_capabilities()
       capabilities.textDocument.completion.completionItem.snippetSupport = true
+
+      --- SQL
+      -- https://github.com/sqls-server/sqls
+      -- You must run `:lua vim.lsp.enable("sqls")` in order to activate it
+      if is_new then
+        vim.lsp.config("sqls", {
+          capabilities = capabilities
+        })
+      end
+
+      vim.lsp.config("postgres_lsp", { capabilities = capabilities })
+      vim.lsp.enable("postgres_lsp")
 
       vim.lsp.config("cssls", {
         capabilities = capabilities,
@@ -159,6 +190,11 @@ return {
       })
       vim.lsp.enable("html")
 
+      vim.lsp.config("jsonls",
+        { capabilities = capabilities }
+      )
+      vim.lsp.enable("jsonls")
+
       vim.lsp.config("jinja_lsp",
         { capabilities = capabilities }
       )
@@ -175,7 +211,51 @@ return {
       }
       vim.lsp.config("emmet-language-server", emmet_config)
       vim.lsp.enable("emmet-language-server")
+
+      --- C/C++
+      vim.lsp.enable("clangd")
+
+      vim.api.nvim_create_autocmd("LspAttach", {
+        callback = function(args)
+          local client = vim.lsp.get_client_by_id(args.data.client_id)
+          if client and client.name == "clangd" then
+            local switch = function()
+              vim.lsp.buf_request(0, "clangd/switchSourceHeader",
+                vim.lsp.util.make_text_document_params(), function(err, result)
+                  if result then vim.cmd("edit " .. vim.uri_to_fname(result)) end
+                end)
+            end
+            vim.keymap.set("n", "<leader>ch", switch,
+              { buffer = args.buf, desc = "clangd: switch source/header" })
+            vim.api.nvim_buf_create_user_command(args.buf,
+              "ClangdSwitchSourceHeader", switch,
+              { desc = "clangd: switch source/header" })
+          end
+        end,
+      })
     end,
+  },
+  {
+    "creativenull/efmls-configs-nvim",
+    -- version = "v1.x.x", -- version is optional, but recommended
+    config = function()
+      local prettier = require("efmls-configs.formatters.prettier")
+      vim.lsp.config("efm",
+        {
+          filetypes = { "html", "htmldjango.jinja", "htmldjango" },
+          settings = {
+            languages = {
+              html = { prettier }
+            }
+          },
+          init_options = {
+            documentFormatting = true,
+            documentRangeFormatting = true,
+          }
+        }
+      )
+      vim.lsp.enable("efm")
+    end
   },
   -- LSP for jinja
   -- FIXME: With `jinja.nvim` enabled, LSP doesn't show snippets?
@@ -253,5 +333,5 @@ return {
       vim.keymap.set({ "n", "v" }, "<leader>xe",
         require("nvim-emmet").wrap_with_abbreviation)
     end,
-  },
+  }
 }

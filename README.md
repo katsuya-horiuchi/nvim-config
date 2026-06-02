@@ -23,3 +23,8 @@ From an environment that you're working on:
 ```
 $ pip install "python-lsp-server[pylint]" python-lsp-black pylsp-mypy
 ```
+
+### HTML
+```bash
+$ brew install efm-langserver
+```
