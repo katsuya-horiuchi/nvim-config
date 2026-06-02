@@ -172,6 +172,9 @@ return {
       vim.o.foldenable = true
       vim.o.fillchars = [[eob: ,fold: ,foldopen:,foldsep: ,foldclose:]]
       require("ufo").setup({
+        provider_selector = function()
+          return { "indent" }
+        end,
         close_fold_kinds_for_ft = {
           default = { "imports" },
         },
