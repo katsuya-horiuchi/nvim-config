@@ -72,10 +72,10 @@ return {
     config = function()
       local hipatterns = require("mini.hipatterns")
 
-      local function custom_word(pat, hex)
+      local function custom_word(pat, hex, style)
         return {
           pattern = pat,
-          group = hipatterns.compute_hex_color_group(hex, "bg")
+          group = hipatterns.compute_hex_color_group(hex, style)
         }
       end
 
@@ -86,13 +86,26 @@ return {
           hack                = { pattern = "%f[%w]()HACK()%f[%W]", group = "MiniHipatternsHack" },
           todo                = { pattern = "%f[%w]()TODO()%f[%W]", group = "MiniHipatternsTodo" },
           note                = { pattern = "%f[%w]()NOTE()%f[%W]", group = "MiniHipatternsNote" },
+          bug                 = custom_word("@bug", "#f24141", "bg"),
 
           -- Neorg
-          neorg_priority_high = custom_word("@high", "#f24141"),
-          neorg_priority_low  = custom_word("@low", "#4188f2"),
-          neorg_deadline      = custom_word("@%d+-%d+-%d+$", "#e5ed10"),
-          neorg_time          = custom_word("@%d+[\\.%d+]*h$", "#e5ed10"),
-          neorg_label         = custom_word("%(@label:%s.+%)", "#2ca534"),
+          neorg_priority_high = custom_word("@high", "#f24141", "bg"),
+          neorg_priority_low  = custom_word("@low", "#4188f2", "bg"),
+          neorg_waiting  = custom_word("@waiting", "#ffa500", "bg"),
+          neorg_deadline      = custom_word("@%d+-%d+-%d+$", "#e5ed10", "bg"),
+          neorg_time          = custom_word("@%d+[\\.%d+]*h$", "#e5ed10", "bg"),
+          neorg_label         = custom_word("%(@label:%s.+%)", "#2ca534", "bg"),
+          neorg_duration         = custom_word("%(@time:%s.+%)", "#2ca534", "fg"),
+
+          -- Log
+          log_debug           = custom_word("%[DEBUG%]", "#9b937f", "fg"),
+          log_info            = custom_word("%[INFO%]", "#65ebf2", "fg"),
+          log_warning         = custom_word("%[WARNING%]", "#d865f2", "fg"),
+          log_error           = custom_word("%[ERROR%]", "#f24141", "fg"),
+          log_time            = custom_word(
+            "%d+%-%d+%-%d+%s%d+:%d+:%d+,%d+", -- Python's `asctime` format
+            "#9b937f", "fg"
+          ),
         },
       })
     end
@@ -101,6 +114,12 @@ return {
     "norcalli/nvim-colorizer.lua",
     config = function()
       require("colorizer").setup()
+    end
+  },
+  {
+    "uga-rosa/ccc.nvim",
+    config = function ()
+      require("ccc").setup()
     end
   },
   {
@@ -173,7 +192,6 @@ return {
           sign = false,
           width = "block",
           min_width = 80,
-          border = true,
         },
         indent = {
           enabled = true,

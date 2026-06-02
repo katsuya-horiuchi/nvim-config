@@ -1,0 +1,20 @@
+{
+    "name": "neovim config",
+    "build": {
+        "dockerfile": "Containerfile",
+        "context": ".."
+    },
+    "mounts": [
+        "source=claude-config-${devcontainerId},target=/root/.claude,type=volume",
+        "source=shadow-${devcontainerId}-git,target=${containerWorkspaceFolder}/.git,type=volume"
+
+    ],
+    "containerEnv": {
+        "CLAUDE_CONFIG_DIR": "/root/.claude"
+    },
+    "remoteUser": "root",
+    "runArgs": [
+        "--name",
+        "devcontainer-neovim-config"
+    ]
+}

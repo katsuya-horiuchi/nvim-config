@@ -1,0 +1,11 @@
+FROM python:3.12-bookworm
+
+WORKDIR /workspaces/nvim
+
+# For virtualenv & pip
+ENV PATH="/root/env/bin:$PATH"
+
+# Install claude code
+ENV HOME=/root
+ENV PATH="/root/.local/bin:$PATH"
+RUN mkdir -p /root/.local/bin && curl -fsSL https://claude.ai/install.sh | bash

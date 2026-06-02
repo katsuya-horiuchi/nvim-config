@@ -116,7 +116,11 @@ return {
     config = function()
       require("aerial").setup({
         disable_max_lines = 20000,
+        width = 20,
       })
+
+      -- Set keymaps
+      vim.keymap.set("n", "<leader>ta", ":AerialToggle<CR>")
     end
   }
 }

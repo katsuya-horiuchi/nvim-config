@@ -117,3 +117,16 @@ vim.api.nvim_create_user_command(
   end,
   { desc = "Copy from template", nargs = "?" }
 )
+vim.api.nvim_create_user_command(
+  "Find",
+  function(opts)
+    local input_string = opts.args
+    if (input_string == '') then
+      return
+    end
+    require("telescope.builtin").grep_string({
+      search = input_string
+    })
+  end,
+  { desc = "Find words", nargs = "?"}
+)

@@ -4,7 +4,7 @@ return {
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
     opts = {
-      ensure_installed = { "c", "lua", "vim", "vimdoc", "query" },
+      ensure_installed = { "c", "lua", "vim", "vimdoc", "query", "rst" },
       highlight = { enable = true },
     },
     config = function(_, opts)
@@ -13,11 +13,11 @@ return {
   },
   {
     "nvim-neorg/neorg",
-    lazy = false, -- Disable lazy loading as some `lazy.nvim` distributions set `lazy = true` by default
+    lazy = false,  -- Disable lazy loading as some `lazy.nvim` distributions set `lazy = true` by default
     version = "*", -- Pin Neorg to the latest stable release
     config = function()
-      -- vim.api.nvim_set_hl(0, "@neorg.tags.ranged_verbatim.code_block", { bg = "#0d1956" })
-      vim.api.nvim_set_hl(0, "CodeBlock", { bg = "#0d1956" })
+      -- vim.api.nvim_set_hl(0, "@neorg.tags.ranged_verbatim.code_block", { bg = "#333354" })
+      vim.api.nvim_set_hl(0, "CodeBlock", { bg = "#282854" })
       require("neorg").setup(
         {
           load = {
@@ -47,6 +47,14 @@ return {
 
       vim.wo.foldlevel = 99
       vim.wo.conceallevel = 2
+      vim.api.nvim_create_user_command(
+        "No",
+        ":Neorg index",
+        { desc = "Neorg" }
+      )
+
+      vim.keymap.set("n", "<leader>tt",
+        "<Plug>(neorg.qol.todo-items.todo.task-cycle)", {})
     end,
   }
 }
