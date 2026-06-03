@@ -40,6 +40,8 @@ return {
       }
     },
     config = function()
+      require("mason").setup()
+
       local version = vim.version()
 
       -- Flag to check whether the new syntax should be used for LSP configuration
