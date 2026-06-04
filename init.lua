@@ -52,7 +52,7 @@ vim.keymap.set("t", "jj", "<C-\\><C-n>")
 
 local utils = require("utils")
 vim.keymap.set("n", "<F2>",
-  function() utils.toggle_with_restore("NvimTreeToggle") end)
+  function() utils.toggle_with_restore("NvimTreeToggle", "NvimTree") end)
 vim.keymap.set("n", "<C-W>X", ":WinShift swap<CR>")
 
 -- Settings by language

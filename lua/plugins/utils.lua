@@ -172,7 +172,10 @@ return {
       vim.o.foldenable = true
       vim.o.fillchars = [[eob: ,fold: ,foldopen:,foldsep: ,foldclose:]]
       require("ufo").setup({
-        provider_selector = function()
+        provider_selector = function(_, filetype)
+          if filetype == "markdown" then
+            return { "treesitter", "indent" }
+          end
           return { "indent" }
         end,
         close_fold_kinds_for_ft = {

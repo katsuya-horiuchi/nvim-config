@@ -20,7 +20,7 @@ return {
         },
         filter = "spectrum",
       })
-      vim.cmd([[colorscheme monokai-pro]])
+      vim.cmd([[colorscheme monokai-pro-spectrum]])
     end,
   },
   -- Tree
@@ -117,15 +117,38 @@ return {
   },
   {
     "stevearc/aerial.nvim",
+    branch = "nvim-0.11",
     config = function()
+      local width = 30
       require("aerial").setup({
         disable_max_lines = 20000,
-        width = 20,
+        layout = {
+          width = width,
+          min_width = width,
+          max_width = width,
+        },
+      })
+
+      vim.api.nvim_create_autocmd("FileType", {
+        pattern = "aerial",
+        callback = function()
+          vim.wo.foldmethod = "indent"
+          -- ufo maps zR/zM globally to its own functions which don't work here;
+          -- override them locally to use the standard vim fold commands instead.
+          vim.keymap.set("n", "zR", function() vim.cmd("normal! zR") end, { buffer = true })
+          vim.keymap.set("n", "zM", function() vim.cmd("normal! zM") end, { buffer = true })
+        end,
       })
 
       -- Set keymaps
       local utils = require("utils")
-      vim.keymap.set("n", "<leader>ta", function() utils.toggle_with_restore("AerialToggle") end)
+      -- restore_on_open=false: aerial always opens at its configured width so no
+      -- restoration is needed. Restoring would call nvim_win_set_width anyway,
+      -- which fires WinResized and triggers nvim-tree's preserve_window_proportions
+      -- to cascade widths into adjacent windows, shrinking code buffers over time.
+      vim.keymap.set("n", "<leader>ta",
+        function() utils.toggle_with_restore("AerialToggle", "aerial",
+            { restore_on_open = false }) end)
       utils.restore_on_close("aerial")
     end
   }

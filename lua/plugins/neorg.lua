@@ -2,9 +2,10 @@ return {
   -- Required for neorg
   {
     "nvim-treesitter/nvim-treesitter",
+    branch = "master",
     build = ":TSUpdate",
     opts = {
-      ensure_installed = { "c", "lua", "vim", "vimdoc", "query", "rst" },
+      ensure_installed = { "c", "lua", "vim", "vimdoc", "query", "rst", "norg", "markdown", "markdown_inline", "python" },
       highlight = { enable = true },
     },
     config = function(_, opts)
@@ -15,6 +16,10 @@ return {
     "nvim-neorg/neorg",
     lazy = false,  -- Disable lazy loading as some `lazy.nvim` distributions set `lazy = true` by default
     version = "*", -- Pin Neorg to the latest stable release
+    dependencies = {
+      "nvim-neorg/tree-sitter-norg",
+      "nvim-neorg/tree-sitter-norg-meta",
+    },
     config = function()
       -- vim.api.nvim_set_hl(0, "@neorg.tags.ranged_verbatim.code_block", { bg = "#333354" })
       vim.api.nvim_set_hl(0, "CodeBlock", { bg = "#282854" })
