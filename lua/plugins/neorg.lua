@@ -5,24 +5,29 @@ return {
     lazy = false,
     commit = "90cd6580",  -- Last commit that's compatible with 0.11
     build = ":TSUpdate",
-    config = function(_, opts)
-      local treesitter = require("nvim-treesitter")
-      treesitter.setup()
-
+    config = function()
       local ensure_installed = {
         "c", "lua", "vim", "vimdoc", "query", "rst", "markdown",
         "markdown_inline", "python"
       }
-      treesitter.install(ensure_installed)
-
-      vim.api.nvim_create_autocmd("FileType", {
-        pattern = ensure_installed,
-        callback = function()
-          -- syntax highlighting, provided by Neovim
-          -- vim.treesitter.start()
-          vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
-        end,
-      })
+      local version = vim.version()
+      if version.minor >= 12 then
+        local treesitter = require("nvim-treesitter")
+        treesitter.setup()
+        treesitter.install(ensure_installed)
+        vim.api.nvim_create_autocmd("FileType", {
+          pattern = ensure_installed,
+          callback = function()
+            vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+          end,
+        })
+      else
+        require("nvim-treesitter.configs").setup({
+          ensure_installed = ensure_installed,
+          highlight = { enable = true },
+          indent = { enable = true },
+        })
+      end
     end,
   },
   {
