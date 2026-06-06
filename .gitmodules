@@ -1,0 +1,8 @@
+[submodule "submodules/netman.nvim"]
+  path = submodules/netman.nvim
+  url = https://github.com/katsuya-horiuchi/netman.nvim
+  branch = podman
+[submodule "submodules/devcontainers.nvim"]
+  path = submodules/devcontainers.nvim
+  url = https://github.com/katsuya-horiuchi/devcontainers.nvim
+  branch = podman-0.11

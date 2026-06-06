@@ -2,14 +2,27 @@ return {
   -- Required for neorg
   {
     "nvim-treesitter/nvim-treesitter",
-    branch = "master",
+    lazy = false,
+    commit = "90cd6580",  -- Last commit that's compatible with 0.11
     build = ":TSUpdate",
-    opts = {
-      ensure_installed = { "c", "lua", "vim", "vimdoc", "query", "rst", "norg", "markdown", "markdown_inline", "python" },
-      highlight = { enable = true },
-    },
     config = function(_, opts)
-      require("nvim-treesitter.configs").setup(opts)
+      local treesitter = require("nvim-treesitter")
+      treesitter.setup()
+
+      local ensure_installed = {
+        "c", "lua", "vim", "vimdoc", "query", "rst", "markdown",
+        "markdown_inline", "python"
+      }
+      treesitter.install(ensure_installed)
+
+      vim.api.nvim_create_autocmd("FileType", {
+        pattern = ensure_installed,
+        callback = function()
+          -- syntax highlighting, provided by Neovim
+          -- vim.treesitter.start()
+          vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+        end,
+      })
     end,
   },
   {

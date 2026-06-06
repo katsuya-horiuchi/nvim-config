@@ -24,9 +24,9 @@ return {
       "williamboman/mason-lspconfig.nvim",
       "nanotee/sqls.nvim",
       {
-        "jedrzejboczar/devcontainers.nvim",
+        dir = vim.fn.stdpath("config") .. "/submodules/devcontainers.nvim",
         dependencies = {
-          "miversen33/netman.nvim", -- optional to browser files in docker container
+          { dir = vim.fn.stdpath("config") .. "/submodules/netman.nvim" }, -- optional to browser files in docker container
         },
         config = function()
           require("devcontainers").setup({
