@@ -137,6 +137,8 @@ return {
           -- override them locally to use the standard vim fold commands instead.
           vim.keymap.set("n", "zR", function() vim.cmd("normal! zR") end, { buffer = true })
           vim.keymap.set("n", "zM", function() vim.cmd("normal! zM") end, { buffer = true })
+          -- aerial may shadow the global <Space>→za mapping; restore it locally.
+          vim.keymap.set("n", "<Space>", "za", { buffer = true })
         end,
       })
 
