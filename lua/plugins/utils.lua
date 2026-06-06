@@ -206,6 +206,7 @@ return {
           skip_heading = false,
         },
       })
+      vim.keymap.set("n", "<leader>m", ":RenderMarkdown toggle<CR>")
     end
   }
 }
