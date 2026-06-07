@@ -31,6 +31,7 @@ on the host via Mason.
 | Lua        | lua-language-server      | lua-language-server           | host         |
 | CSS        | cssls                    | vscode-css-language-server    | host         |
 | HTML       | html-lsp                 | vscode-html-language-server   | host         |
+| Lua        | efm-langserver (stylua)  | efm-langserver, stylua        | host         |
 | HTML       | efm-langserver           | efm-langserver                | host         |
 | HTML       | emmet-language-server    | emmet-language-server         | host         |
 | JSON       | jsonls                   | vscode-json-language-server   | host         |
@@ -81,3 +82,21 @@ RUN pip install "python-lsp-server[pylint]" python-lsp-black pylsp-mypy
 To add support for another runtime-dependent LSP, install it in the project's
 `Containerfile` and add a `does_devcontainer_exist()` branch in
 `lua/plugins/lsp.lua`.
+
+## Formatting
+
+Lua files are formatted with [StyLua](https://github.com/JohnnyMorganz/StyLua)
+via efm-langserver. Style is configured in `.stylua.toml`. `<leader>f`
+prefers efm (stylua) over lua-ls's built-in formatter and notifies which was
+used. For other filetypes, `<leader>f` uses the LSP's built-in formatter.
+
+### Pre-commit
+
+Install pre-commit and the hooks:
+
+```bash
+brew install pre-commit
+pre-commit install
+```
+
+On each commit, stylua will format all staged Lua files automatically.

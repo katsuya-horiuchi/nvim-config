@@ -242,21 +242,39 @@ return {
     -- version = "v1.x.x", -- version is optional, but recommended
     config = function()
       local prettier = require("efmls-configs.formatters.prettier")
-      vim.lsp.config("efm",
-        {
-          filetypes = { "html", "htmldjango.jinja", "htmldjango" },
-          settings = {
-            languages = {
-              html = { prettier }
-            }
-          },
-          init_options = {
-            documentFormatting = true,
-            documentRangeFormatting = true,
+      local stylua = require("efmls-configs.formatters.stylua")
+      vim.lsp.config("efm", {
+        filetypes = { "html", "htmldjango.jinja", "htmldjango", "lua" },
+        settings = {
+          languages = {
+            html = { prettier },
+            lua  = { stylua },
           }
+        },
+        init_options = {
+          documentFormatting = true,
+          documentRangeFormatting = true,
         }
-      )
+      })
       vim.lsp.enable("efm")
+
+      -- For Lua, prefer efm (stylua) over lua-ls's built-in formatter so that
+      -- .stylua.toml is respected. Falls back to lua-ls if efm is not running
+      -- (e.g. in projects without stylua). Notifies which formatter was used.
+      vim.api.nvim_create_autocmd("FileType", {
+        pattern = "lua",
+        callback = function()
+          vim.keymap.set("n", "<leader>f", function()
+            local efm = vim.lsp.get_clients({ bufnr = 0, name = "efm" })
+            local use_efm = #efm > 0
+            vim.lsp.buf.format({
+              filter = use_efm and function(c) return c.name == "efm" end or nil,
+              async = true,
+            })
+            vim.notify("formatter: " .. (use_efm and "efm (stylua)" or "lua-ls"))
+          end, { buffer = true })
+        end,
+      })
     end
   },
   -- LSP for jinja
