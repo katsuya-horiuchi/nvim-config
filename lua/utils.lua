@@ -3,17 +3,17 @@ local M = {}
 -- per-filetype snapshots
 -- pre_open:  editor widths captured before the sidebar opened
 -- pre_close: full layout (editor + sidebar) captured before the sidebar closed
-local pre_open   = {}
-local pre_close  = {}
-local in_toggle  = {}
-local sidebars   = {}  -- all registered sidebar filetypes; excluded from each other's snapshots
+local pre_open = {}
+local pre_close = {}
+local in_toggle = {}
+local sidebars = {} -- all registered sidebar filetypes; excluded from each other's snapshots
 
 local function snapshot(exclude_filetype)
   local s = { editor = {}, sidebar_width = nil }
   for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
     local buf = vim.api.nvim_win_get_buf(win)
-    local ft  = vim.bo[buf].filetype
-    local w   = vim.api.nvim_win_get_width(win)
+    local ft = vim.bo[buf].filetype
+    local w = vim.api.nvim_win_get_width(win)
     if ft == exclude_filetype then
       s.sidebar_width = w
     elseif not sidebars[ft] then
@@ -25,7 +25,9 @@ local function snapshot(exclude_filetype)
 end
 
 local function apply(s, sidebar_win)
-  if not s then return end
+  if not s then
+    return
+  end
   for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
     local target
     if win == sidebar_win then
@@ -84,9 +86,15 @@ function M.restore_on_close(filetype)
   vim.api.nvim_create_autocmd("WinClosed", {
     callback = function(args)
       local win = tonumber(args.match)
-      if not vim.api.nvim_win_is_valid(win) then return end
-      if vim.bo[vim.api.nvim_win_get_buf(win)].filetype ~= filetype then return end
-      if in_toggle[filetype] then return end  -- toggle_with_restore handles this itself
+      if not vim.api.nvim_win_is_valid(win) then
+        return
+      end
+      if vim.bo[vim.api.nvim_win_get_buf(win)].filetype ~= filetype then
+        return
+      end
+      if in_toggle[filetype] then
+        return
+      end -- toggle_with_restore handles this itself
       pre_close[filetype] = snapshot(filetype)
       pre_close[filetype].sidebar_width = vim.api.nvim_win_get_width(win)
       -- Deferred: WinClosed fires before nvim removes the window, so we wait
@@ -104,7 +112,9 @@ function M.map_fold_keys(actions, opts)
   vim.keymap.set("n", "zM", actions.close_all, opts)
   vim.keymap.set("n", "<leader>z", function()
     local level = tonumber(vim.fn.getcharstr())
-    if level then actions.fold_to(level) end
+    if level then
+      actions.fold_to(level)
+    end
   end, opts)
 end
 

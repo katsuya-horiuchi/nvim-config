@@ -101,19 +101,19 @@ return {
       "nvim-lua/plenary.nvim",
       -- optional but recommended
       { "nvim-telescope/telescope-fzf-native.nvim", build = "make" },
-      "crispgm/telescope-heading.nvim"
+      "crispgm/telescope-heading.nvim",
     },
     config = function()
       require("telescope").setup({
         extensions = {
           heading = {
             picker_opts = {
-              sorting_strategy = "ascending"
-            }
-          }
-        }
+              sorting_strategy = "ascending",
+            },
+          },
+        },
       })
-    end
+    end,
   },
   {
     "stevearc/aerial.nvim",
@@ -122,7 +122,7 @@ return {
       local width = 30
       require("aerial").setup({
         disable_max_lines = 20000,
-        backends = {"treesitter", "lsp", "markdown"},
+        backends = { "treesitter", "lsp", "markdown" },
         layout = {
           width = width,
           min_width = width,
@@ -141,9 +141,15 @@ return {
           vim.wo.foldexpr = "indent(v:lnum)==0?0:'>'.(indent(v:lnum)/2)"
           -- ufo maps zR/zM/z{n} globally; override locally with native fold commands.
           require("utils").map_fold_keys({
-            open_all  = function() vim.cmd("normal! zR") end,
-            close_all = function() vim.cmd("normal! zM") end,
-            fold_to   = function(l) vim.opt_local.foldlevel = l end,
+            open_all = function()
+              vim.cmd("normal! zR")
+            end,
+            close_all = function()
+              vim.cmd("normal! zM")
+            end,
+            fold_to = function(l)
+              vim.opt_local.foldlevel = l
+            end,
           }, { buffer = true })
           -- Space is noremap in init.lua so it bypasses aerial's za handler; remap here.
           vim.keymap.set("n", "<Space>", "za", { buffer = true, remap = true })
@@ -156,10 +162,14 @@ return {
       -- restoration is needed. Restoring would call nvim_win_set_width anyway,
       -- which fires WinResized and triggers nvim-tree's preserve_window_proportions
       -- to cascade widths into adjacent windows, shrinking code buffers over time.
-      vim.keymap.set("n", "<leader>ta",
-        function() utils.toggle_with_restore("AerialToggle", "aerial",
-            { restore_on_open = false }) end)
+      vim.keymap.set("n", "<leader>ta", function()
+        utils.toggle_with_restore(
+          "AerialToggle",
+          "aerial",
+          { restore_on_open = false }
+        )
+      end)
       utils.restore_on_close("aerial")
-    end
-  }
+    end,
+  },
 }

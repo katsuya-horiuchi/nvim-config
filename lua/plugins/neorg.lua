@@ -3,12 +3,19 @@ return {
   {
     "nvim-treesitter/nvim-treesitter",
     lazy = false,
-    commit = "90cd6580",  -- Last commit that's compatible with 0.11
+    commit = "90cd6580", -- Last commit that's compatible with 0.11
     build = ":TSUpdate",
     config = function()
       local ensure_installed = {
-        "c", "lua", "vim", "vimdoc", "query", "rst", "markdown",
-        "markdown_inline", "python"
+        "c",
+        "lua",
+        "vim",
+        "vimdoc",
+        "query",
+        "rst",
+        "markdown",
+        "markdown_inline",
+        "python",
       }
       local version = vim.version()
       if version.minor >= 12 then
@@ -32,7 +39,7 @@ return {
   },
   {
     "nvim-neorg/neorg",
-    lazy = false,  -- Disable lazy loading as some `lazy.nvim` distributions set `lazy = true` by default
+    lazy = false, -- Disable lazy loading as some `lazy.nvim` distributions set `lazy = true` by default
     version = "*", -- Pin Neorg to the latest stable release
     dependencies = {
       "nvim-neorg/tree-sitter-norg",
@@ -41,43 +48,41 @@ return {
     config = function()
       -- vim.api.nvim_set_hl(0, "@neorg.tags.ranged_verbatim.code_block", { bg = "#333354" })
       vim.api.nvim_set_hl(0, "CodeBlock", { bg = "#282854" })
-      require("neorg").setup(
-        {
-          load = {
-            ["core.defaults"] = {},
-            ["core.concealer"] = {
-              config = {
-                icons = {
-                  code_block = {
-                    content_only = true,
-                    conceal = true,
-                    highlight = "CodeBlock"
-                  }
-                }
-              }
-            },
-            ["core.dirman"] = {
-              config = {
-                workspaces = {
-                  main = "$NEORG_PATH",
+      require("neorg").setup({
+        load = {
+          ["core.defaults"] = {},
+          ["core.concealer"] = {
+            config = {
+              icons = {
+                code_block = {
+                  content_only = true,
+                  conceal = true,
+                  highlight = "CodeBlock",
                 },
-                default_workspace = "main",
               },
             },
           },
-        }
-      )
+          ["core.dirman"] = {
+            config = {
+              workspaces = {
+                main = "$NEORG_PATH",
+              },
+              default_workspace = "main",
+            },
+          },
+        },
+      })
 
       vim.wo.foldlevel = 99
       vim.wo.conceallevel = 2
-      vim.api.nvim_create_user_command(
-        "No",
-        ":Neorg index",
-        { desc = "Neorg" }
-      )
+      vim.api.nvim_create_user_command("No", ":Neorg index", { desc = "Neorg" })
 
-      vim.keymap.set("n", "<leader>tt",
-        "<Plug>(neorg.qol.todo-items.todo.task-cycle)", {})
+      vim.keymap.set(
+        "n",
+        "<leader>tt",
+        "<Plug>(neorg.qol.todo-items.todo.task-cycle)",
+        {}
+      )
     end,
-  }
+  },
 }

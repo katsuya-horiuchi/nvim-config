@@ -51,13 +51,23 @@ vim.keymap.set("t", "jj", "<C-\\><C-n>")
 -- Keymaps for plugins
 
 local utils = require("utils")
-vim.keymap.set("n", "<F2>",
-  function() utils.toggle_with_restore("NvimTreeToggle", "NvimTree") end)
+vim.keymap.set("n", "<F2>", function()
+  utils.toggle_with_restore("NvimTreeToggle", "NvimTree")
+end)
 vim.keymap.set("n", "<C-W>X", ":WinShift swap<CR>")
 
 -- Settings by language
 vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
-  pattern = { "*.lua", "*.cpp", "*.h", "*.html", "*.jinja2", "*.js", "*.css", "*.jinja" },
+  pattern = {
+    "*.lua",
+    "*.cpp",
+    "*.h",
+    "*.html",
+    "*.jinja2",
+    "*.js",
+    "*.css",
+    "*.jinja",
+  },
   callback = function()
     vim.o.tabstop = 2
     vim.o.softtabstop = 2
@@ -96,40 +106,33 @@ vim.api.nvim_create_user_command(
   ":tab term",
   { desc = "Start terminal in a new tab" }
 )
-vim.api.nvim_create_user_command(
-  "Template",
-  function(opts)
-    local lang = opts.args
-    local file
-    if lang == "python" then
-      file = "python.py"
-    else
-      print("Template not available for the language:", lang)
-      return
-    end
-    local path = table.concat({
-      os.getenv("HOME"), "/.config/nvim/templates/", file
-    })
+vim.api.nvim_create_user_command("Template", function(opts)
+  local lang = opts.args
+  local file
+  if lang == "python" then
+    file = "python.py"
+  else
+    print("Template not available for the language:", lang)
+    return
+  end
+  local path = table.concat({
+    os.getenv("HOME"),
+    "/.config/nvim/templates/",
+    file,
+  })
 
-    local f = io.open(path, "r")
-    if f ~= nil
-    then
-      local content = f:read("*a")
-      vim.snippet.expand(content)
-    end
-  end,
-  { desc = "Copy from template", nargs = "?" }
-)
-vim.api.nvim_create_user_command(
-  "Find",
-  function(opts)
-    local input_string = opts.args
-    if (input_string == "") then
-      return
-    end
-    require("telescope.builtin").grep_string({
-      search = input_string
-    })
-  end,
-  { desc = "Find words", nargs = "?" }
-)
+  local f = io.open(path, "r")
+  if f ~= nil then
+    local content = f:read("*a")
+    vim.snippet.expand(content)
+  end
+end, { desc = "Copy from template", nargs = "?" })
+vim.api.nvim_create_user_command("Find", function(opts)
+  local input_string = opts.args
+  if input_string == "" then
+    return
+  end
+  require("telescope.builtin").grep_string({
+    search = input_string,
+  })
+end, { desc = "Find words", nargs = "?" })

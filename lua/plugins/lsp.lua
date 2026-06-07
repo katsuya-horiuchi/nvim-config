@@ -15,7 +15,6 @@ local function load_require(module)
   return 0
 end
 
-
 return {
   {
     "neovim/nvim-lspconfig",
@@ -34,10 +33,10 @@ return {
             -- devcontainers_cli_cmd = {
             --   "devcontainer", "--docker-path", "podman"
             -- },
-            log = { level = "trace" }
+            log = { level = "trace" },
           })
-        end
-      }
+        end,
+      },
     },
     config = function()
       require("mason").setup()
@@ -51,15 +50,13 @@ return {
         lspconfig = require("lspconfig")
       end
 
-      vim.filetype.add(
-        {
-          extension = {
-            jinja = "jinja",
-            jinja2 = "jinja",
-            j2 = "jinja"
-          }
-        }
-      )
+      vim.filetype.add({
+        extension = {
+          jinja = "jinja",
+          jinja2 = "jinja",
+          j2 = "jinja",
+        },
+      })
 
       local does_devcontainer_exist = function()
         local dir = vim.fn.getcwd() .. "/.devcontainer"
@@ -104,13 +101,10 @@ return {
       if is_new then
         if does_devcontainer_exist() and not is_env_activated() then
           print("Using devcontainer for pylsp")
-          vim.lsp.config(
-            "pylsp",
-            {
-              cmd = require("devcontainers").lsp_cmd({ "pylsp" }),
-              settings = pylsp_settings
-            }
-          )
+          vim.lsp.config("pylsp", {
+            cmd = require("devcontainers").lsp_cmd({ "pylsp" }),
+            settings = pylsp_settings,
+          })
         else
           vim.lsp.config("pylsp", { settings = pylsp_settings })
         end
@@ -126,25 +120,25 @@ return {
         on_init = function(client)
           local path = client.workspace_folders[1].name
           if
-              vim.loop.fs_stat(path .. "/.luarc.json")
-              or vim.loop.fs_stat(path .. "/.luarc.jsonc")
+            vim.loop.fs_stat(path .. "/.luarc.json")
+            or vim.loop.fs_stat(path .. "/.luarc.jsonc")
           then
             return
           end
 
           client.config.settings.Lua =
-              vim.tbl_deep_extend("force", client.config.settings.Lua, {
-                runtime = {
-                  version = "LuaJIT",
+            vim.tbl_deep_extend("force", client.config.settings.Lua, {
+              runtime = {
+                version = "LuaJIT",
+              },
+              -- Make the server aware of Neovim runtime files
+              workspace = {
+                checkThirdParty = false,
+                library = {
+                  vim.env.VIMRUNTIME,
                 },
-                -- Make the server aware of Neovim runtime files
-                workspace = {
-                  checkThirdParty = false,
-                  library = {
-                    vim.env.VIMRUNTIME,
-                  },
-                },
-              })
+              },
+            })
         end,
         settings = {
           Lua = {},
@@ -157,7 +151,6 @@ return {
         lspconfig.lua_ls.setup(lua_ls_config)
       end
 
-
       -- Enable (broadcasting) snippet capability for completion
       local capabilities = vim.lsp.protocol.make_client_capabilities()
       capabilities.textDocument.completion.completionItem.snippetSupport = true
@@ -167,7 +160,7 @@ return {
       -- You must run `:lua vim.lsp.enable("sqls")` in order to activate it
       if is_new then
         vim.lsp.config("sqls", {
-          capabilities = capabilities
+          capabilities = capabilities,
         })
       end
 
@@ -185,21 +178,17 @@ return {
         init_options = {
           configurationSection = { "html", "htmldjango.jinja" },
           embeddedLanguage = {
-            javascript = true
+            javascript = true,
           },
           provideFormatter = true,
-        }
+        },
       })
       vim.lsp.enable("html")
 
-      vim.lsp.config("jsonls",
-        { capabilities = capabilities }
-      )
+      vim.lsp.config("jsonls", { capabilities = capabilities })
       vim.lsp.enable("jsonls")
 
-      vim.lsp.config("jinja_lsp",
-        { capabilities = capabilities }
-      )
+      vim.lsp.config("jinja_lsp", { capabilities = capabilities })
       vim.lsp.enable("jinja_lsp")
 
       local emmet_config = {
@@ -222,16 +211,29 @@ return {
           local client = vim.lsp.get_client_by_id(args.data.client_id)
           if client and client.name == "clangd" then
             local switch = function()
-              vim.lsp.buf_request(0, "clangd/switchSourceHeader",
-                vim.lsp.util.make_text_document_params(), function(err, result)
-                  if result then vim.cmd("edit " .. vim.uri_to_fname(result)) end
-                end)
+              vim.lsp.buf_request(
+                0,
+                "clangd/switchSourceHeader",
+                vim.lsp.util.make_text_document_params(),
+                function(err, result)
+                  if result then
+                    vim.cmd("edit " .. vim.uri_to_fname(result))
+                  end
+                end
+              )
             end
-            vim.keymap.set("n", "<leader>ch", switch,
-              { buffer = args.buf, desc = "clangd: switch source/header" })
-            vim.api.nvim_buf_create_user_command(args.buf,
-              "ClangdSwitchSourceHeader", switch,
-              { desc = "clangd: switch source/header" })
+            vim.keymap.set(
+              "n",
+              "<leader>ch",
+              switch,
+              { buffer = args.buf, desc = "clangd: switch source/header" }
+            )
+            vim.api.nvim_buf_create_user_command(
+              args.buf,
+              "ClangdSwitchSourceHeader",
+              switch,
+              { desc = "clangd: switch source/header" }
+            )
           end
         end,
       })
@@ -248,13 +250,13 @@ return {
         settings = {
           languages = {
             html = { prettier },
-            lua  = { stylua },
-          }
+            lua = { stylua },
+          },
         },
         init_options = {
           documentFormatting = true,
           documentRangeFormatting = true,
-        }
+        },
       })
       vim.lsp.enable("efm")
 
@@ -268,14 +270,18 @@ return {
             local efm = vim.lsp.get_clients({ bufnr = 0, name = "efm" })
             local use_efm = #efm > 0
             vim.lsp.buf.format({
-              filter = use_efm and function(c) return c.name == "efm" end or nil,
+              filter = use_efm and function(c)
+                return c.name == "efm"
+              end or nil,
               async = true,
             })
-            vim.notify("formatter: " .. (use_efm and "efm (stylua)" or "lua-ls"))
+            vim.notify(
+              "formatter: " .. (use_efm and "efm (stylua)" or "lua-ls")
+            )
           end, { buffer = true })
         end,
       })
-    end
+    end,
   },
   -- LSP for jinja
   -- FIXME: With `jinja.nvim` enabled, LSP doesn't show snippets?
@@ -284,7 +290,7 @@ return {
   -- },
   -- Syntax highlight for jinja
   {
-    "HiPhish/jinja.vim"
+    "HiPhish/jinja.vim",
   },
   {
     "hrsh7th/nvim-cmp",
@@ -350,8 +356,11 @@ return {
   {
     "olrtg/nvim-emmet",
     config = function()
-      vim.keymap.set({ "n", "v" }, "<leader>xe",
-        require("nvim-emmet").wrap_with_abbreviation)
+      vim.keymap.set(
+        { "n", "v" },
+        "<leader>xe",
+        require("nvim-emmet").wrap_with_abbreviation
+      )
     end,
-  }
+  },
 }
