@@ -205,6 +205,10 @@ return {
           skip_level = 1,
           skip_heading = false,
         },
+        checkbox = {
+          unchecked = { icon = "🟥 " },
+          checked = { icon = "✅ " },
+        },
       })
       vim.keymap.set("n", "<leader>m", ":RenderMarkdown toggle<CR>")
     end
