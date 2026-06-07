@@ -157,12 +157,11 @@ return {
     event = "BufReadPost",
 
     init = function()
-      vim.keymap.set("n", "zR", function()
-        require("ufo").openAllFolds()
-      end)
-      vim.keymap.set("n", "zM", function()
-        require("ufo").closeAllFolds()
-      end)
+      require("utils").map_fold_keys({
+        open_all  = function() require("ufo").openAllFolds() end,
+        close_all = function() require("ufo").closeAllFolds() end,
+        fold_to   = function(l) require("ufo").closeFoldsWith(l) end,
+      })
     end,
 
     config = function()

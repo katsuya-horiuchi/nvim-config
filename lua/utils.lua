@@ -98,4 +98,14 @@ function M.restore_on_close(filetype)
   })
 end
 
+-- Sets zR, zM, and <leader>z{n} keymaps with the provided fold actions.
+function M.map_fold_keys(actions, opts)
+  vim.keymap.set("n", "zR", actions.open_all, opts)
+  vim.keymap.set("n", "zM", actions.close_all, opts)
+  vim.keymap.set("n", "<leader>z", function()
+    local level = tonumber(vim.fn.getcharstr())
+    if level then actions.fold_to(level) end
+  end, opts)
+end
+
 return M

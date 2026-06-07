@@ -122,23 +122,31 @@ return {
       local width = 30
       require("aerial").setup({
         disable_max_lines = 20000,
+        backends = {"treesitter", "lsp", "markdown"},
         layout = {
           width = width,
           min_width = width,
           max_width = width,
+        },
+        keymaps = {
+          ["<Space>"] = false,
         },
       })
 
       vim.api.nvim_create_autocmd("FileType", {
         pattern = "aerial",
         callback = function()
-          vim.wo.foldmethod = "indent"
-          -- ufo maps zR/zM globally to its own functions which don't work here;
-          -- override them locally to use the standard vim fold commands instead.
-          vim.keymap.set("n", "zR", function() vim.cmd("normal! zR") end, { buffer = true })
-          vim.keymap.set("n", "zM", function() vim.cmd("normal! zM") end, { buffer = true })
-          -- aerial may shadow the global <Space>→za mapping; restore it locally.
-          vim.keymap.set("n", "<Space>", "za", { buffer = true })
+          vim.wo.foldmethod = "expr"
+          vim.opt_local.shiftwidth = 2
+          vim.wo.foldexpr = "indent(v:lnum)==0?0:'>'.(indent(v:lnum)/2)"
+          -- ufo maps zR/zM/z{n} globally; override locally with native fold commands.
+          require("utils").map_fold_keys({
+            open_all  = function() vim.cmd("normal! zR") end,
+            close_all = function() vim.cmd("normal! zM") end,
+            fold_to   = function(l) vim.opt_local.foldlevel = l end,
+          }, { buffer = true })
+          -- Space is noremap in init.lua so it bypasses aerial's za handler; remap here.
+          vim.keymap.set("n", "<Space>", "za", { buffer = true, remap = true })
         end,
       })
 
