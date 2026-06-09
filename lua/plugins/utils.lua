@@ -210,6 +210,12 @@ return {
       "nvim-tree/nvim-web-devicons",
     },
     config = function()
+      vim.o.autoread = true
+      vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter" }, {
+        pattern = "*.md",
+        command = "checktime",
+      })
+
       require("render-markdown").setup({
         heading = {
           position = "inline",
