@@ -56,6 +56,16 @@ vim.keymap.set("n", "<F2>", function()
 end)
 vim.keymap.set("n", "<C-W>X", ":WinShift swap<CR>")
 
+-- <leader>b: prompt for width and set current window width
+vim.keymap.set("n", "<leader>b", function()
+  local input = vim.fn.input("Width: ")
+  local w = tonumber(input)
+  if w then
+    vim.api.nvim_win_set_width(0, w)
+  end
+  vim.cmd("echo ''") -- clear output
+end, { desc = "Set current window width" })
+
 -- Settings by language
 vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
   pattern = {
