@@ -9,6 +9,10 @@ vim.o.expandtab = true
 vim.opt.listchars = { tab = ">-", space = "·" }
 vim.opt.list = true
 
+-- Prevent "File exists" error when external tools (e.g. Claude Code)
+-- write files atomically
+vim.opt.backupcopy = "yes"
+
 -- Disable netrw at the very start of your init.lua, for nvim-tree
 vim.g.loaded_netrw = 1
 vim.g.loaded_netrwPlugin = 1
