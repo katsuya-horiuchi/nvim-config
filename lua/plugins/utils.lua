@@ -217,6 +217,10 @@ return {
       })
 
       require("render-markdown").setup({
+        win_options = {
+          number = { default = true, rendered = true },
+          relativenumber = { default = true, rendered = true },
+        },
         heading = {
           position = "inline",
           sign = false,
