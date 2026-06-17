@@ -93,3 +93,53 @@ export PATH="$HOME/.local/nvim-0.11/bin:$PATH"
   - Confirm no errors from `render-markdown/core/ui.lua`
 
 - [ ] Remove `branch = "nvim-0.11"` from aerial.nvim once main branch supports 0.12
+
+
+## Claude Code notification
+
+See `docs/claude-code-notification.md` for full design notes.
+
+### Done
+- Per-instance port allocation: each Neovim claims a port in 9999-10018;
+  `notify.sh` fans out to all ports in parallel
+- macOS notification via `osascript` with configurable sound (`notify_sound`)
+- Smart suppression: skip notification only when tmux pane is active AND
+  kitty is the frontmost app; always notify when in a different tmux window
+  or a different app is frontmost
+- Idle suppression: `Notification` hook stdin contains
+  `"notification_type":"idle_prompt"` for idle waits; `notify.sh` extracts
+  it with `grep`/`sed` and passes it as `&ntype=`; Neovim skips the
+  notification when `ntype == "idle_prompt"`
+
+### Pending
+
+- [ ] SSH support
+  - [ ] Add `NOTIFY_HOST` env var to `notify.sh` (default
+        `host.docker.internal`) so the target host is configurable
+  - [ ] Resolve tunnel bind address: SSH reverse tunnel binds to
+        `127.0.0.1` on the remote by default, but the container reaches
+        the host via the gateway IP (not 127.0.0.1)
+        - Option A: set `GatewayPorts clientspecified` in remote
+          `sshd_config` and bind tunnel to `0.0.0.0`
+        - Option B: set `NOTIFY_HOST=<gateway-ip>` in devcontainer env
+  - [ ] Set up `RemoteForward` in `~/.ssh/config` on local Mac —
+        single port (9999) is likely enough over SSH since only one
+        Neovim instance is typical in that context
+  - [ ] Verify `host.docker.internal` resolves correctly in Podman on
+        remote Linux — may need to be set explicitly if not configured
+
+
+## Neovim memory usage script
+
+Shell script on Mac that shows memory per working directory, grouping
+`nvim .` and `nvim --embed` instances together.
+
+Current state: script works for main instances via socket query; `--embed`
+instances are skipped (no socket). RSS ≈ 100 MB total, Lua heap ≈ 30 MB.
+
+- [ ] Add `vim.uv` timer to `init.lua` that writes
+      `collectgarbage("count")` to `/tmp/nvim_mem_<pid>` every 30s;
+      add `VimLeave` autocmd to delete the file on exit
+- [ ] Update shell script to read `/tmp/nvim_mem_<pid>` for all PIDs
+      instead of querying via socket — drops the `--embed` skip and
+      makes main/embed instances uniform

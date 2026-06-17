@@ -90,6 +90,25 @@ via efm-langserver. Style is configured in `.stylua.toml`. `<leader>f`
 prefers efm (stylua) over lua-ls's built-in formatter and notifies which was
 used. For other filetypes, `<leader>f` uses the LSP's built-in formatter.
 
+## Claude Code notifications
+
+`.claude/notify.sh` sends a desktop notification when Claude Code finishes a
+task. It uses kitty's OSC 99 protocol and requires kitty as your terminal.
+
+In tmux, the notification is suppressed if the Claude Code window is already
+active. Outside tmux, it always fires (macOS queues it silently if kitty is
+focused).
+
+To use in a project, copy both files into the project's `.claude/` directory:
+
+```bash
+cp .claude/notify.sh /path/to/project/.claude/
+cp .claude/settings.local.json /path/to/project/.claude/
+```
+
+To customize the notification, edit the `title` and `body` variables in
+`notify.sh`.
+
 ### Pre-commit
 
 Install pre-commit and the hooks:

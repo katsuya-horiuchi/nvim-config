@@ -150,3 +150,139 @@ vim.api.nvim_create_user_command("Find", function(opts)
     search = input_string,
   })
 end, { desc = "Find words", nargs = "?" })
+
+-- Claude Code notification server
+--
+-- Overview:
+--   Claude Code runs in a devcontainer. When a task finishes (or needs
+--   attention), .claude/notify.sh sends an HTTP request to the Mac host
+--   via host.docker.internal. This server receives those requests and
+--   fires a macOS notification.
+--
+-- Port allocation:
+--   Each Neovim instance claims the first free port in 9999-10018.
+--   notify.sh fans out to all 20 ports in parallel so every open
+--   Neovim instance gets the notification.
+--
+-- Notification suppression:
+--   $TMUX_PANE identifies the pane where this Neovim is running.
+--   - In tmux, pane not active: user is in a different window;
+--     always notify.
+--   - In tmux, pane active: user may be looking here; suppress if
+--     kitty is the frontmost macOS app.
+--   - Not in tmux: no pane distinction; suppress if kitty is
+--     frontmost.
+
+local notify_sound = "Submarine" -- any name from /System/Library/Sounds/
+local notify_server, notify_port
+for port = 9999, 10018 do
+  local srv = vim.uv.new_tcp()
+  if pcall(function()
+    srv:bind("127.0.0.1", port)
+  end) then
+    notify_server = srv
+    notify_port = port
+    break
+  end
+  srv:close()
+end
+
+if notify_server then
+  notify_server:listen(128, function(err)
+    if err then
+      return
+    end
+    local client = vim.uv.new_tcp()
+    notify_server:accept(client)
+    client:read_start(function(_, data)
+      if not data then
+        client:close()
+        return
+      end
+
+      -- Respond immediately so curl doesn't hang
+      client:write("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n")
+
+      -- Parse ?window=<project>&event=<stop|notification>&ntype=<...>
+      local project = data:match("%?window=([^%s&]+)") or ""
+      local event = data:match("event=([^%s&]+)") or ""
+      local ntype = data:match("ntype=([^%s&]+)") or ""
+      if event ~= "stop" and event ~= "notification" then
+        vim.schedule(function()
+          vim.notify(
+            "notify: unknown event '" .. event .. "'",
+            vim.log.levels.ERROR
+          )
+        end)
+        client:close()
+        return
+      end
+      -- "idle_prompt" fires constantly while Claude waits for input;
+      -- Only permission requests and other notification types are
+      -- worth surfacing
+      if event == "notification" and ntype == "idle_prompt" then
+        client:close()
+        return
+      end
+
+      -- Construct message for OS notification
+      local status
+      if event == "notification" then
+        status = "needs attention"
+      else
+        status = "task finished"
+      end
+      local msg
+      if project ~= "" then
+        msg = project .. ": " .. status
+      else
+        msg = "Claude Code: " .. status
+      end
+
+      vim.schedule(function()
+        -- Check if this Neovim's tmux pane is currently visible
+        local tmux_pane = os.getenv("TMUX_PANE")
+        local pane_active = tmux_pane
+          and vim.trim(
+              vim.fn.system(
+                "tmux display-message -t "
+                  .. tmux_pane
+                  .. " -p '#{pane_active}'"
+              )
+            )
+            == "1"
+        local notify_script
+
+        if tmux_pane and not pane_active then
+          -- Different tmux window: user can't see this Neovim,
+          -- skip the frontmost check and always notify
+          notify_script = string.format(
+            "display notification \"%s\""
+              .. " with title \"Claude Code\" sound name \""
+              .. notify_sound
+              .. "\"",
+            msg
+          )
+        else
+          -- Not in tmux, or pane is active: suppress only
+          -- if kitty is already frontmost
+          notify_script = string.format(
+            [[
+            tell application "System Events"
+              set frontApp to name of first application process whose frontmost is true
+            end tell
+            if frontApp is not "kitty" then
+              display notification "%s" with title "Claude Code" sound name "%s"
+            end if
+          ]],
+            msg,
+            notify_sound
+          )
+        end
+
+        vim.fn.jobstart({ "osascript", "-e", notify_script })
+      end)
+      client:close()
+    end)
+  end)
+end
