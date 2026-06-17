@@ -93,7 +93,12 @@ return {
 
       local is_env_activated = function()
         local pythonpath_env = os.getenv("HOME") .. "/env/bin/python"
-        local pythonpath = os.execute("which python")
+        local handle = io.popen("which python 2>/dev/null")
+        if not handle then
+          return false
+        end
+        local pythonpath = handle:read("*l")
+        handle:close()
         return pythonpath == pythonpath_env
       end
 
