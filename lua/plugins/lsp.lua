@@ -368,4 +368,31 @@ return {
       )
     end,
   },
+  {
+    "nvim-treesitter/nvim-treesitter",
+    -- The pinned queries/python/highlights.scm references "except*" (Python
+    -- 3.11 exception groups) as an anonymous node, but the bundled parser
+    -- doesn't define it. This causes a query error on BufReadPost that
+    -- interrupts the autocmd chain and prevents LSP from attaching.
+    -- Patch runs in config (every startup) so it survives plugin reinstalls.
+    -- disable = { "python" } is a belt-and-suspenders guard, but the query
+    -- error fires before the disable check runs, so the patch is required.
+    config = function()
+      local path = vim.fn.stdpath("data")
+        .. "/lazy/nvim-treesitter/queries/python/highlights.scm"
+      local lines = vim.fn.readfile(path)
+      for i, line in ipairs(lines) do
+        if line:match("^%s*\"except%*\"") then
+          lines[i] = line:gsub("\"except%*\"", "; \"except*\"")
+        end
+      end
+      vim.fn.writefile(lines, path)
+      require("nvim-treesitter.configs").setup({
+        highlight = {
+          enable = true,
+          disable = { "python" },
+        },
+      })
+    end,
+  },
 }

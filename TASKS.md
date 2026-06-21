@@ -71,6 +71,16 @@ export PATH="$HOME/.local/nvim-0.11/bin:$PATH"
   - Update config to new API: remove `require("nvim-treesitter.configs").setup()`
   - Enable highlighting via FileType autocmd + `vim.treesitter.start()`
   - Delete `~/.local/share/nvim/lazy/nvim-treesitter` and remove lock entry to force re-clone
+  - Remove the `except*` workaround in `lsp.lua` (patch + `disable = {"python"}`);
+    the new treesitter should support it natively
+
+- [ ] Investigate tree-sitter-python `"except*"` node mismatch (low priority)
+  - Pinned nvim-treesitter queries reference `"except*"` (Python 3.11 exception
+    groups) but the parser it installs doesn't define that anonymous node
+  - Workaround in place: startup patch in `lsp.lua` comments out the line +
+    `disable = {"python"}` as belt-and-suspenders
+  - Check if a newer tree-sitter-python binary supports `"except*"`; if so,
+    installing it would let us remove the workaround without waiting for 0.12
 
 - [ ] Fix norg treesitter parser
   - New nvim-treesitter only supports C scanners; norg uses `scanner.cc` (C++)
