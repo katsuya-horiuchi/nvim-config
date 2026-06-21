@@ -100,6 +100,28 @@ vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead" }, {
   end,
 })
 
+-- Markdown folding: ufo is disabled for markdown (see utils.lua), so set
+-- up native treesitter folds here. Empty foldtext makes Neovim display
+-- the fold's first line with full rendering, letting render-markdown draw
+-- the fold (heading icon, indent, code language icon, etc.). vim.schedule
+-- defers foldtext so it wins over ufo's own BufWinEnter handler.
+--
+-- winhighlight remaps the built-in Folded group (gray) to Normal in
+-- markdown windows only: otherwise Neovim's fold highlight overlays the
+-- fold line and cuts into render-markdown's heading/code backgrounds.
+vim.api.nvim_create_autocmd("BufWinEnter", {
+  group = vim.api.nvim_create_augroup("markdown.fold", {}),
+  pattern = "*.md",
+  callback = function()
+    vim.opt_local.foldmethod = "expr"
+    vim.opt_local.foldexpr = "v:lua.vim.treesitter.foldexpr()"
+    vim.opt_local.winhighlight = "Folded:Normal"
+    vim.schedule(function()
+      vim.opt_local.foldtext = ""
+    end)
+  end,
+})
+
 -- For LSP
 vim.keymap.set("n", "<leader>d", vim.lsp.buf.definition, {})
 vim.keymap.set("n", "<leader>f", vim.lsp.buf.format, {})

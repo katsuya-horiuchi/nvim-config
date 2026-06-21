@@ -191,8 +191,11 @@ return {
       vim.o.fillchars = [[eob: ,fold: ,foldopen:,foldsep: ,foldclose:]]
       require("ufo").setup({
         provider_selector = function(_, filetype)
+          -- Disable ufo for markdown: it overrides the fold display and
+          -- breaks render-markdown's rendering on folded lines. Markdown
+          -- folds are handled natively instead (see init.lua).
           if filetype == "markdown" then
-            return { "treesitter", "indent" }
+            return false
           end
           return { "indent" }
         end,
@@ -236,6 +239,19 @@ return {
         checkbox = {
           unchecked = { icon = "🟥 " },
           checked = { icon = "✅ " },
+        },
+        code = {
+          -- Show the ``` fence so a code block without a language
+          -- still renders a visible first line (otherwise its fold
+          -- collapses to a hidden blank line). border="none" is also
+          -- required: the default "hide" conceals the whole fence line
+          -- via conceal_lines regardless of conceal_delimiters.
+          conceal_delimiters = false,
+          border = "none",
+          -- Extend the code background over the now-visible fence lines;
+          -- the default inset of 1 skips them, leaving the ``` on the
+          -- theme background instead of the code block color.
+          background_inset = 0,
         },
       })
       vim.keymap.set("n", "<leader>m", ":RenderMarkdown toggle<CR>")
