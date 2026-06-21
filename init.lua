@@ -51,6 +51,7 @@ vim.keymap.set("n", "<Leader>9", "9gt")
 vim.keymap.set("n", "<Leader>0", ":tablast")
 vim.keymap.set("t", "<Esc>", "<C-\\><C-n>")
 vim.keymap.set("t", "jj", "<C-\\><C-n>")
+vim.keymap.set("t", "<C-v><Esc>", "<Esc>")
 
 -- Keymaps for plugins
 
