@@ -133,11 +133,29 @@ vim.api.nvim_create_user_command(
   vim.diagnostic.setloclist,
   { desc = "Show diagnistic window" }
 )
-vim.api.nvim_create_user_command(
-  "Rename",
-  vim.lsp.buf.rename,
-  { desc = "Rename variable" }
-)
+vim.api.nvim_create_user_command("Rename", function()
+  vim.lsp.buf.rename()
+end, { desc = "Rename variable" })
+vim.api.nvim_create_user_command("Ref", function()
+  vim.lsp.buf.references(nil, {
+    on_list = function(list)
+      vim.fn.setqflist({}, " ", list)
+      vim.cmd("copen")
+    end,
+  })
+end, { desc = "Find references" })
+vim.api.nvim_create_user_command("RefBuf", function()
+  vim.lsp.buf.references(nil, {
+    on_list = function(list)
+      local bufname = vim.api.nvim_buf_get_name(0)
+      list.items = vim.tbl_filter(function(item)
+        return item.filename == bufname
+      end, list.items)
+      vim.fn.setqflist({}, " ", list)
+      vim.cmd("copen")
+    end,
+  })
+end, { desc = "Find references in current buffer" })
 vim.api.nvim_create_user_command(
   "Bash",
   ":tab term",
