@@ -112,31 +112,27 @@ See `docs/claude-code-notification.md` for full design notes.
 ### Done
 - Per-instance port allocation: each Neovim claims a port in 9999-10018;
   `notify.sh` fans out to all ports in parallel
-- macOS notification via `osascript` with configurable sound (`notify_sound`)
-- Smart suppression: skip notification only when tmux pane is active AND
-  kitty is the frontmost app; always notify when in a different tmux window
-  or a different app is frontmost
+- Smart suppression: skip when tmux pane is active; always notify when
+  in a different tmux window or not in tmux
 - Idle suppression: `Notification` hook stdin contains
   `"notification_type":"idle_prompt"` for idle waits; `notify.sh` extracts
   it with `grep`/`sed` and passes it as `&ntype=`; Neovim skips the
   notification when `ntype == "idle_prompt"`
+- Transport selection: one-time `vim.ui.select` prompt on first launch
+  with OS-detected recommendation; `:NotifyTransport` to change later.
+  Saved to `stdpath("data")/notify_transport`. Supports:
+  - `osascript` — macOS notification via AppleScript (Mac Neovim)
+  - `osc99` — OSC 99 escape sequence through SSH PTY to kitty on Mac;
+    DCS passthrough wrapping when running inside tmux
+  - `notify-send` — Linux desktop notification
+  - `none` — disabled
+- `NOTIFY_HOST` env var in `notify.sh` (default `host.docker.internal`)
 
 ### Pending
 
-- [ ] SSH support
-  - [ ] Add `NOTIFY_HOST` env var to `notify.sh` (default
-        `host.docker.internal`) so the target host is configurable
-  - [ ] Resolve tunnel bind address: SSH reverse tunnel binds to
-        `127.0.0.1` on the remote by default, but the container reaches
-        the host via the gateway IP (not 127.0.0.1)
-        - Option A: set `GatewayPorts clientspecified` in remote
-          `sshd_config` and bind tunnel to `0.0.0.0`
-        - Option B: set `NOTIFY_HOST=<gateway-ip>` in devcontainer env
-  - [ ] Set up `RemoteForward` in `~/.ssh/config` on local Mac —
-        single port (9999) is likely enough over SSH since only one
-        Neovim instance is typical in that context
-  - [ ] Verify `host.docker.internal` resolves correctly in Podman on
-        remote Linux — may need to be set explicitly if not configured
+- [ ] Verify `host.docker.internal` resolves in Podman on remote Linux
+      — may need `--add-host=host.docker.internal:host-gateway` in the
+      devcontainer config, or set `NOTIFY_HOST=<gateway-ip>` explicitly
 
 
 ## Neovim memory usage script

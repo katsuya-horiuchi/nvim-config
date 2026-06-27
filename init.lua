@@ -196,9 +196,8 @@ end, { desc = "Find words", nargs = "?" })
 --
 -- Overview:
 --   Claude Code runs in a devcontainer. When a task finishes (or needs
---   attention), .claude/notify.sh sends an HTTP request to the Mac host
---   via host.docker.internal. This server receives those requests and
---   fires a macOS notification.
+--   attention), .claude/notify.sh sends an HTTP request to this server,
+--   which fires a desktop notification via the configured transport.
 --
 -- Port allocation:
 --   Each Neovim instance claims the first free port in 9999-10018.
@@ -207,14 +206,87 @@ end, { desc = "Find words", nargs = "?" })
 --
 -- Notification suppression:
 --   $TMUX_PANE identifies the pane where this Neovim is running.
---   - In tmux, pane not active: user is in a different window;
---     always notify.
---   - In tmux, pane active: user may be looking here; suppress if
---     kitty is the frontmost macOS app.
---   - Not in tmux: no pane distinction; suppress if kitty is
---     frontmost.
+--   - In tmux, pane active: user is looking here; skip.
+--   - In tmux, pane not active: user is elsewhere; notify.
+--   - Not in tmux: always notify.
+--
+-- Transport (:NotifyTransport to change):
+--   osascript  — macOS notification via AppleScript (Mac Neovim)
+--   osc99      — OSC 99 escape sequence through SSH PTY to kitty on
+--                Mac; DCS passthrough wrapping when inside tmux
+--   notify-send — Linux desktop notification
+--   none       — disabled
+--
+--   Saved to stdpath("data")/notify_transport. On first launch Neovim
+--   prompts with an OS-detected recommendation.
 
-local notify_sound = "Submarine" -- any name from /System/Library/Sounds/
+local notify_transport
+local transport_file = vim.fn.stdpath("data") .. "/notify_transport"
+do
+  local f = io.open(transport_file, "r")
+  if f then
+    notify_transport = vim.trim(f:read("*a"))
+    f:close()
+  end
+end
+
+local function save_transport(t)
+  notify_transport = t
+  local f = io.open(transport_file, "w")
+  if f then
+    f:write(t)
+    f:close()
+  end
+end
+
+vim.api.nvim_create_user_command("NotifyTransport", function(opts)
+  save_transport(opts.args)
+  vim.notify("Notify transport: " .. opts.args)
+end, {
+  nargs = 1,
+  complete = function()
+    return { "osascript", "osc99", "notify-send", "none" }
+  end,
+})
+
+if not notify_transport then
+  vim.api.nvim_create_autocmd("VimEnter", {
+    once = true,
+    callback = function()
+      if #vim.api.nvim_list_uis() == 0 then
+        return
+      end
+      local sysname = vim.uv.os_uname().sysname
+      local recommended
+      if sysname == "Darwin" then
+        recommended = "osascript"
+      elseif os.getenv("SSH_TTY") then
+        recommended = "osc99"
+      else
+        recommended = "notify-send"
+      end
+      local choices = { "osascript", "osc99", "notify-send", "none" }
+      for i, v in ipairs(choices) do
+        if v == recommended then
+          table.remove(choices, i)
+          table.insert(choices, 1, v)
+          break
+        end
+      end
+      vim.ui.select(choices, {
+        prompt = "Claude notify transport"
+          .. " (recommended: "
+          .. recommended
+          .. ")",
+      }, function(choice)
+        if choice then
+          save_transport(choice)
+        end
+      end)
+    end,
+  })
+end
+
 local notify_server, notify_port
 for port = 9999, 10018 do
   local srv = vim.uv.new_tcp()
@@ -281,7 +353,11 @@ if notify_server then
       end
 
       vim.schedule(function()
-        -- Check if this Neovim's tmux pane is currently visible
+        local transport = notify_transport
+        if not transport or transport == "none" then
+          return
+        end
+
         local tmux_pane = os.getenv("TMUX_PANE")
         local pane_active = tmux_pane
           and vim.trim(
@@ -292,36 +368,61 @@ if notify_server then
               )
             )
             == "1"
-        local notify_script
 
-        if tmux_pane and not pane_active then
-          -- Different tmux window: user can't see this Neovim,
-          -- skip the frontmost check and always notify
-          notify_script = string.format(
-            "display notification \"%s\""
-              .. " with title \"Claude Code\" sound name \""
-              .. notify_sound
-              .. "\"",
-            msg
+        if transport == "osascript" then
+          local script
+          if tmux_pane and not pane_active then
+            script = string.format(
+              "display notification \"%s\""
+                .. " with title \"Claude Code\""
+                .. " sound name \"Submarine\"",
+              msg
+            )
+          else
+            script = string.format(
+              "tell application \"System Events\"\n"
+                .. "  set fa to name of first application"
+                .. " process whose frontmost is true\n"
+                .. "end tell\n"
+                .. "if fa is not \"kitty\" then\n"
+                .. "  display notification \"%s\""
+                .. " with title \"Claude Code\""
+                .. " sound name \"Submarine\"\n"
+                .. "end if",
+              msg
+            )
+          end
+          vim.fn.jobstart({ "osascript", "-e", script })
+        elseif transport == "osc99" then
+          if tmux_pane and pane_active then
+            return
+          end
+          local esc = "\027"
+          local bel = "\007"
+          local osc = esc
+            .. "]99;i=1:d=0:p=title;Claude Code"
+            .. bel
+            .. esc
+            .. "]99;i=1:d=1:p=body;"
+            .. msg
+            .. bel
+          local seq
+          if tmux_pane then
+            local payload = osc:gsub("\027", "\027\027")
+            seq = esc .. "Ptmux;" .. payload .. esc .. "\\"
+          else
+            seq = osc
+          end
+          vim.fn.jobstart(
+            { "sh", "-c", "printf '%s' \"$SEQ\" > /dev/tty" },
+            { env = { SEQ = seq } }
           )
-        else
-          -- Not in tmux, or pane is active: suppress only
-          -- if kitty is already frontmost
-          notify_script = string.format(
-            [[
-            tell application "System Events"
-              set frontApp to name of first application process whose frontmost is true
-            end tell
-            if frontApp is not "kitty" then
-              display notification "%s" with title "Claude Code" sound name "%s"
-            end if
-          ]],
-            msg,
-            notify_sound
-          )
+        elseif transport == "notify-send" then
+          if tmux_pane and pane_active then
+            return
+          end
+          vim.fn.jobstart({ "notify-send", "Claude Code", msg })
         end
-
-        vim.fn.jobstart({ "osascript", "-e", notify_script })
       end)
       client:close()
     end)
