@@ -211,11 +211,12 @@ end, { desc = "Find words", nargs = "?" })
 --   - Not in tmux: always notify.
 --
 -- Transport (:NotifyTransport to change):
---   osascript  — macOS notification via AppleScript (Mac Neovim)
---   osc99      — OSC 99 escape sequence through SSH PTY to kitty on
---                Mac; DCS passthrough wrapping when inside tmux
---   notify-send — Linux desktop notification
---   none       — disabled
+--   mac-listener — HTTP to a persistent Mac listener on port 9998;
+--                  address: 127.0.0.1 on Mac, or the SSH client IP
+--                  from $SSH_CONNECTION on Linux (set by SSH,
+--                  propagated by tmux's update-environment)
+--   notify-send  — Linux desktop notification (no Mac in the loop)
+--   none         — disabled
 --
 --   Saved to stdpath("data")/notify_transport. On first launch Neovim
 --   prompts with an OS-detected recommendation.
@@ -245,7 +246,7 @@ vim.api.nvim_create_user_command("NotifyTransport", function(opts)
 end, {
   nargs = 1,
   complete = function()
-    return { "osascript", "osc99", "notify-send", "none" }
+    return { "mac-listener", "notify-send", "none" }
   end,
 })
 
@@ -258,14 +259,12 @@ if not notify_transport then
       end
       local sysname = vim.uv.os_uname().sysname
       local recommended
-      if sysname == "Darwin" then
-        recommended = "osascript"
-      elseif os.getenv("SSH_TTY") then
-        recommended = "osc99"
+      if sysname == "Darwin" or os.getenv("SSH_CONNECTION") then
+        recommended = "mac-listener"
       else
         recommended = "notify-send"
       end
-      local choices = { "osascript", "osc99", "notify-send", "none" }
+      local choices = { "mac-listener", "notify-send", "none" }
       for i, v in ipairs(choices) do
         if v == recommended then
           table.remove(choices, i)
@@ -369,54 +368,29 @@ if notify_server then
             )
             == "1"
 
-        if transport == "osascript" then
-          local script
-          if tmux_pane and not pane_active then
-            script = string.format(
-              "display notification \"%s\""
-                .. " with title \"Claude Code\""
-                .. " sound name \"Submarine\"",
-              msg
-            )
-          else
-            script = string.format(
-              "tell application \"System Events\"\n"
-                .. "  set fa to name of first application"
-                .. " process whose frontmost is true\n"
-                .. "end tell\n"
-                .. "if fa is not \"kitty\" then\n"
-                .. "  display notification \"%s\""
-                .. " with title \"Claude Code\""
-                .. " sound name \"Submarine\"\n"
-                .. "end if",
-              msg
-            )
-          end
-          vim.fn.jobstart({ "osascript", "-e", script })
-        elseif transport == "osc99" then
+        if transport == "mac-listener" then
           if tmux_pane and pane_active then
             return
           end
-          local esc = "\027"
-          local bel = "\007"
-          local osc = esc
-            .. "]99;i=1:d=0:p=title;Claude Code"
-            .. bel
-            .. esc
-            .. "]99;i=1:d=1:p=body;"
-            .. msg
-            .. bel
-          local seq
-          if tmux_pane then
-            local payload = osc:gsub("\027", "\027\027")
-            seq = esc .. "Ptmux;" .. payload .. esc .. "\\"
+          local sysname = vim.uv.os_uname().sysname
+          local host
+          if sysname == "Darwin" then
+            host = "127.0.0.1"
           else
-            seq = osc
+            local conn = os.getenv("SSH_CONNECTION") or ""
+            host = conn:match("^(%S+)")
           end
-          vim.fn.jobstart(
-            { "sh", "-c", "printf '%s' \"$SEQ\" > /dev/tty" },
-            { env = { SEQ = seq } }
-          )
+          if not host then
+            return
+          end
+          vim.fn.jobstart({
+            "sh",
+            "-c",
+            "curl -sf --max-time 1 -G"
+              .. " --data-urlencode \"msg=$NMSG\""
+              .. " \"http://$HOST:9998/\""
+              .. " >/dev/null 2>&1",
+          }, { env = { NMSG = msg, HOST = host } })
         elseif transport == "notify-send" then
           if tmux_pane and pane_active then
             return

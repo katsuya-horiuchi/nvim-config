@@ -121,10 +121,10 @@ See `docs/claude-code-notification.md` for full design notes.
 - Transport selection: one-time `vim.ui.select` prompt on first launch
   with OS-detected recommendation; `:NotifyTransport` to change later.
   Saved to `stdpath("data")/notify_transport`. Supports:
-  - `osascript` — macOS notification via AppleScript (Mac Neovim)
-  - `osc99` — OSC 99 escape sequence through SSH PTY to kitty on Mac;
-    DCS passthrough wrapping when running inside tmux
-  - `notify-send` — Linux desktop notification
+  - `mac-listener` — HTTP to a persistent Mac listener on port 9998;
+    address auto-detected: `127.0.0.1` on Mac, SSH client IP from
+    `$SSH_CONNECTION` on Linux
+  - `notify-send` — Linux desktop notification (no Mac in the loop)
   - `none` — disabled
 - `NOTIFY_HOST` env var in `notify.sh` (default `host.docker.internal`)
 
