@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.claudecode.notifylistener</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/sh</string>
+    <string>-c</string>
+    <string>exec python3 "$HOME/.config/nvim/.claude/mac-listener.py"</string>
+  </array>
+
+  <!-- Start on login and restart automatically if it exits -->
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>/tmp/claude-notify.log</string>
+  <key>StandardErrorPath</key>
+  <string>/tmp/claude-notify.log</string>
+</dict>
+</plist>
