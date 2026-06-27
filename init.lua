@@ -288,7 +288,8 @@ end
 
 -- fire_notification(project, event, force)
 -- Dispatches a notification via the configured transport.
--- Skips if the tmux pane is active, unless force=true.
+-- Skips if Neovim's tmux window is the current window (user is likely
+-- looking here), unless force=true.
 local function fire_notification(project, event, force)
   local transport = notify_transport
   if not transport or transport == "none" then
@@ -299,7 +300,7 @@ local function fire_notification(project, event, force)
   local pane_active = tmux_pane
     and vim.trim(
         vim.fn.system(
-          "tmux display-message -t " .. tmux_pane .. " -p '#{pane_active}'"
+          "tmux display-message -t " .. tmux_pane .. " -p '#{window_active}'"
         )
       )
       == "1"
