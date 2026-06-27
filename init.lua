@@ -286,6 +286,64 @@ if not notify_transport then
   })
 end
 
+-- fire_notification(project, event, force)
+-- Dispatches a notification via the configured transport.
+-- Skips if the tmux pane is active, unless force=true.
+local function fire_notification(project, event, force)
+  local transport = notify_transport
+  if not transport or transport == "none" then
+    return
+  end
+
+  local tmux_pane = os.getenv("TMUX_PANE")
+  local pane_active = tmux_pane
+    and vim.trim(
+        vim.fn.system(
+          "tmux display-message -t " .. tmux_pane .. " -p '#{pane_active}'"
+        )
+      )
+      == "1"
+
+  if transport == "mac-listener" then
+    if not force and tmux_pane and pane_active then
+      return
+    end
+    local sysname = vim.uv.os_uname().sysname
+    local host
+    if sysname == "Darwin" then
+      host = "127.0.0.1"
+    else
+      local conn = os.getenv("SSH_CONNECTION") or ""
+      host = conn:match("^(%S+)")
+    end
+    if not host then
+      return
+    end
+    vim.fn.jobstart({
+      "sh",
+      "-c",
+      "curl -sf --max-time 1 -G"
+        .. " --data-urlencode \"window=$NW\""
+        .. " --data-urlencode \"event=$NE\""
+        .. " \"http://$HOST:9998/\""
+        .. " >/dev/null 2>&1",
+    }, { env = { NW = project, NE = event, HOST = host } })
+  elseif transport == "notify-send" then
+    local status = event == "notification" and "needs attention"
+      or "task finished"
+    local msg = project ~= "" and project .. ": " .. status
+      or "Claude Code: " .. status
+    if not force and tmux_pane and pane_active then
+      return
+    end
+    vim.fn.jobstart({ "notify-send", "Claude Code", msg })
+  end
+end
+
+vim.api.nvim_create_user_command("NotifyTest", function()
+  fire_notification("test", "stop", true)
+end, { desc = "Send a test Claude Code notification" })
+
 local notify_server, notify_port
 for port = 9999, 10018 do
   local srv = vim.uv.new_tcp()
@@ -330,74 +388,14 @@ if notify_server then
         return
       end
       -- "idle_prompt" fires constantly while Claude waits for input;
-      -- Only permission requests and other notification types are
-      -- worth surfacing
+      -- only permission requests and other types are worth surfacing
       if event == "notification" and ntype == "idle_prompt" then
         client:close()
         return
       end
 
-      -- Construct message for OS notification
-      local status
-      if event == "notification" then
-        status = "needs attention"
-      else
-        status = "task finished"
-      end
-      local msg
-      if project ~= "" then
-        msg = project .. ": " .. status
-      else
-        msg = "Claude Code: " .. status
-      end
-
       vim.schedule(function()
-        local transport = notify_transport
-        if not transport or transport == "none" then
-          return
-        end
-
-        local tmux_pane = os.getenv("TMUX_PANE")
-        local pane_active = tmux_pane
-          and vim.trim(
-              vim.fn.system(
-                "tmux display-message -t "
-                  .. tmux_pane
-                  .. " -p '#{pane_active}'"
-              )
-            )
-            == "1"
-
-        if transport == "mac-listener" then
-          if tmux_pane and pane_active then
-            return
-          end
-          local sysname = vim.uv.os_uname().sysname
-          local host
-          if sysname == "Darwin" then
-            host = "127.0.0.1"
-          else
-            local conn = os.getenv("SSH_CONNECTION") or ""
-            host = conn:match("^(%S+)")
-          end
-          if not host then
-            return
-          end
-          vim.fn.jobstart({
-            "sh",
-            "-c",
-            "curl -sf --max-time 1 -G"
-              .. " --data-urlencode \"window=$NW\""
-              .. " --data-urlencode \"event=$NE\""
-              .. " \"http://$HOST:9998/\""
-              .. " >/dev/null 2>&1",
-          }, { env = { NW = project, NE = event, HOST = host } })
-        elseif transport == "notify-send" then
-          if tmux_pane and pane_active then
-            return
-          end
-          vim.fn.jobstart({ "notify-send", "Claude Code", msg })
-        end
+        fire_notification(project, event, false)
       end)
       client:close()
     end)
