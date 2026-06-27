@@ -387,10 +387,11 @@ if notify_server then
             "sh",
             "-c",
             "curl -sf --max-time 1 -G"
-              .. " --data-urlencode \"msg=$NMSG\""
+              .. " --data-urlencode \"window=$NW\""
+              .. " --data-urlencode \"event=$NE\""
               .. " \"http://$HOST:9998/\""
               .. " >/dev/null 2>&1",
-          }, { env = { NMSG = msg, HOST = host } })
+          }, { env = { NW = project, NE = event, HOST = host } })
         elseif transport == "notify-send" then
           if tmux_pane and pane_active then
             return
