@@ -348,7 +348,7 @@ local notify_server, notify_port
 for port = 9999, 10018 do
   local srv = vim.uv.new_tcp()
   if pcall(function()
-    srv:bind("127.0.0.1", port)
+    srv:bind("0.0.0.0", port)
   end) then
     notify_server = srv
     notify_port = port
