@@ -13,7 +13,7 @@ NTYPE=$(printf '%s' "$STDIN" \
   | grep -o '"notification_type":"[^"]*"' \
   | sed 's/.*":"//;s/"//')
 BASE="http://${NOTIFY_HOST:-host.containers.internal}"
-LOG="$PWD/notify-debug.log"
+LOG="/tmp/notify-debug.log"
 echo "--- $(date) ---" >> "$LOG"
 echo "event=$EVENT project=$PROJECT ntype=$NTYPE" >> "$LOG"
 echo "base=$BASE" >> "$LOG"
