@@ -2,8 +2,8 @@
 
 # Notify Neovim on the host when Claude Code finishes.
 # Each Neovim instance claims a port in 9999-10018; we fan out to all.
-# NOTIFY_HOST: host running Neovim. Auto-detected if unset:
-#   host.docker.internal (Docker) or host.containers.internal (Podman).
+# NOTIFY_HOST: host running Neovim (default: host.containers.internal).
+#   For Docker Desktop, set NOTIFY_HOST=host.docker.internal.
 
 NOTIFY_PORT="${NOTIFY_PORT:-9999}"
 PROJECT=$(basename "$PWD")
@@ -12,17 +12,14 @@ STDIN=$(cat)
 NTYPE=$(printf '%s' "$STDIN" \
   | grep -o '"notification_type":"[^"]*"' \
   | sed 's/.*":"//;s/"//')
-if [ -z "$NOTIFY_HOST" ]; then
-  if getent hosts host.docker.internal >/dev/null 2>&1; then
-    NOTIFY_HOST="host.docker.internal"
-  else
-    NOTIFY_HOST="host.containers.internal"
-  fi
-fi
-BASE="http://${NOTIFY_HOST}"
-port=$NOTIFY_PORT
-while [ "$port" -le 10018 ]; do
-  url="${BASE}:${port}/?window=${PROJECT}&event=${EVENT}&ntype=${NTYPE}"
-  curl -sf --max-time 1 "$url" >/dev/null 2>&1 &
-  port=$((port + 1))
-done
+BASE="http://${NOTIFY_HOST:-host.containers.internal}"
+LOG="$PWD/notify-debug.log"
+echo "--- $(date) ---" >> "$LOG"
+echo "event=$EVENT project=$PROJECT ntype=$NTYPE" >> "$LOG"
+echo "base=$BASE" >> "$LOG"
+echo "curl=$(command -v curl)" >> "$LOG"
+# Only probe port 9999 to keep the log short
+url="${BASE}:9999/?window=${PROJECT}&event=${EVENT}&ntype=${NTYPE}"
+echo "url=$url" >> "$LOG"
+curl -v --max-time 2 "$url" >> "$LOG" 2>&1
+echo "exit=$?" >> "$LOG"

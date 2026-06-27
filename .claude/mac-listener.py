@@ -14,6 +14,22 @@ import subprocess
 
 PORT = 9998
 SOUND = "Submarine"
+# Suppress notification when one of these apps is frontmost on Mac.
+# Only checked for SSH requests (not localhost).
+TERMINAL_APPS = {"kitty", "Terminal", "iTerm2", "Alacritty", "WezTerm"}
+
+
+def terminal_is_frontmost() -> bool:
+    result = subprocess.run(
+        [
+            "osascript", "-e",
+            "tell application \"System Events\" to get name"
+            " of first application process whose frontmost is true",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout.strip() in TERMINAL_APPS
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -21,7 +37,9 @@ class Handler(BaseHTTPRequestHandler):
         q = parse_qs(urlparse(self.path).query)
         window = q.get("window", [""])[0]
         event = q.get("event", [""])[0]
-        print(f"[request] window={window!r} event={event!r}")
+        client_ip = self.client_address[0]
+        print(f"[request] window={window!r} event={event!r}"
+              f" from={client_ip}")
         self.send_response(200)
         self.end_headers()
         if event == "stop":
@@ -30,6 +48,10 @@ class Handler(BaseHTTPRequestHandler):
             status = "needs attention"
         else:
             print(f"[skip] unknown event {event!r}")
+            return
+        # For SSH requests, suppress if terminal is already frontmost
+        if client_ip != "127.0.0.1" and terminal_is_frontmost():
+            print("[skip] terminal is frontmost")
             return
         msg = f"{window}: {status}" if window else f"Claude Code: {status}"
         safe = msg.replace("\\", "\\\\").replace('"', '\\"')

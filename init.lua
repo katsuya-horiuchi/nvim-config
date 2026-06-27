@@ -288,31 +288,34 @@ end
 
 -- fire_notification(project, event, force)
 -- Dispatches a notification via the configured transport.
--- Skips if Neovim's tmux window is the current window (user is likely
--- looking here), unless force=true.
+-- mac-listener on Mac: suppresses if tmux window is active (user is
+--   looking at this machine). On Linux via SSH: forwards unconditionally;
+--   mac-listener.py handles suppression via frontmost app check on Mac.
+-- notify-send: suppresses if tmux window is active, unless force=true.
 local function fire_notification(project, event, force)
   local transport = notify_transport
   if not transport or transport == "none" then
     return
   end
 
-  local tmux_pane = os.getenv("TMUX_PANE")
-  local pane_active = tmux_pane
-    and vim.trim(
-        vim.fn.system(
-          "tmux display-message -t " .. tmux_pane .. " -p '#{window_active}'"
-        )
-      )
-      == "1"
-
   if transport == "mac-listener" then
-    if not force and tmux_pane and pane_active then
-      return
-    end
     local sysname = vim.uv.os_uname().sysname
     local host
     if sysname == "Darwin" then
       host = "127.0.0.1"
+      local tmux_pane = os.getenv("TMUX_PANE")
+      local window_active = tmux_pane
+        and vim.trim(
+            vim.fn.system(
+              "tmux display-message -t "
+                .. tmux_pane
+                .. " -p '#{window_active}'"
+            )
+          )
+          == "1"
+      if not force and tmux_pane and window_active then
+        return
+      end
     else
       local conn = os.getenv("SSH_CONNECTION") or ""
       host = conn:match("^(%S+)")
@@ -330,13 +333,21 @@ local function fire_notification(project, event, force)
         .. " >/dev/null 2>&1",
     }, { env = { NW = project, NE = event, HOST = host } })
   elseif transport == "notify-send" then
+    local tmux_pane = os.getenv("TMUX_PANE")
+    local window_active = tmux_pane
+      and vim.trim(
+          vim.fn.system(
+            "tmux display-message -t " .. tmux_pane .. " -p '#{window_active}'"
+          )
+        )
+        == "1"
+    if not force and tmux_pane and window_active then
+      return
+    end
     local status = event == "notification" and "needs attention"
       or "task finished"
     local msg = project ~= "" and project .. ": " .. status
       or "Claude Code: " .. status
-    if not force and tmux_pane and pane_active then
-      return
-    end
     vim.fn.jobstart({ "notify-send", "Claude Code", msg })
   end
 end
